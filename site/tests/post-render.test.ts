@@ -125,6 +125,54 @@ describe('tag routes', () => {
   });
 });
 
+describe('feed output', () => {
+  it('emits feed.xml', () => {
+    expect(exists('feed.xml')).toBe(true);
+  });
+
+  it('parses as well-formed XML', async () => {
+    const { XMLValidator } = await import('fast-xml-parser');
+    expect(XMLValidator.validate(read('feed.xml'))).toBe(true);
+  });
+
+  it('uses absolute links and an identical absolute permalink guid', () => {
+    const xml = read('feed.xml');
+    expect(xml).toContain(`<link>https://example.com/blog/${SLUG}/</link>`);
+    expect(xml).toContain(
+      `<guid isPermaLink="true">https://example.com/blog/${SLUG}/</guid>`,
+    );
+  });
+
+  it('declares a language and an atom self link', () => {
+    const xml = read('feed.xml');
+    expect(xml).toContain('<language>en</language>');
+    expect(xml).toMatch(/<atom:link href="https:\/\/example\.com\/feed\.xml" rel="self"/);
+  });
+
+  it('ships no rendered post body, so no consumer has HTML to sanitize', () => {
+    const xml = read('feed.xml');
+    expect(xml).not.toContain('<content:encoded');
+    expect(xml).toContain('<description>');
+  });
+
+  it('derives lastBuildDate from content, not from build wall-clock time', () => {
+    const xml = read('feed.xml');
+    const lastBuild = xml.match(/<lastBuildDate>([^<]+)<\/lastBuildDate>/)?.[1];
+    const pubDate = xml.match(/<pubDate>([^<]+)<\/pubDate>/)?.[1];
+    expect(lastBuild).toBeDefined();
+    // Only one post exists, so these must agree. If lastBuildDate were "now",
+    // every deploy would churn the feed for every subscriber.
+    expect(lastBuild).toBe(pubDate);
+  });
+
+  it('escapes XML-unsafe characters rather than emitting them raw', () => {
+    const xml = read('feed.xml');
+    // No bare ampersand anywhere: every & must begin an entity.
+    const bare = [...xml.matchAll(/&(?!amp;|lt;|gt;|quot;|apos;|#\d+;|#x[0-9a-fA-F]+;)/g)];
+    expect(bare).toEqual([]);
+  });
+});
+
 describe('invariants that must hold on every page', () => {
   const pages = [
     'index.html',

@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^7.3.1",
+    "@astrojs/rss": "^4.0.19",
     "astro": "^7.3.5",
     "rehype-autolink-headings": "^7.1.0",
     "rehype-external-links": "^3.0.0",
@@ -28,6 +29,7 @@
     "@fontsource-variable/jetbrains-mono": "^5.3.0",
     "@fontsource-variable/source-serif-4": "^5.3.0",
     "@types/node": "^22",
+    "fast-xml-parser": "^5.11.1",
     "typescript": "^5",
     "vitest": "^3.2.7"
   }

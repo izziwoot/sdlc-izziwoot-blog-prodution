@@ -85,6 +85,24 @@ Astro 4 idioms that typecheck against nothing in this project.
 time for a description over 160 characters — caught by CI, not by a reader,
 exactly as intent outcome #9 requires.
 
+### ⚠️ Task 15's CSP as specified would break syntax highlighting
+
+Verified at Task 8 against real build output, not reasoned: Shiki emits inline
+`style` **attributes** — one on the `<pre>` and one per highlighted token, six on
+the first post — and CSP `style-src` covers inline style attributes as well as
+`<style>` elements. The policy as originally written strips every code colour with
+no build error and no console error the author would notice.
+
+The fix is `style-src-attr 'unsafe-inline'` **alongside** `style-src 'self'`, which
+scopes the exception to attributes and keeps `<style>` elements and external
+stylesheets forbidden. Putting `'unsafe-inline'` into `style-src` itself would also
+permit `<style>` elements and is strictly worse.
+
+Consequence for Task 15's tests: `checkCsp` must reject `'unsafe-inline'` in
+`script-src` and `style-src` while **permitting** it in `style-src-attr`. The
+blanket rejection the plan currently specifies makes the correct policy
+unrepresentable, so that assertion needs rewriting when Task 15 is implemented.
+
 ### Blocked-by-decision gate
 
 **Task 22 must not start** until §10.1 and §10.2 of the spec are resolved by a human and the `policies/` reviewer text is amended to match. Tasks 1–21 and 23 are unblocked and depend on nothing from that decision. Do not guess a branch-protection configuration.
@@ -3617,7 +3635,7 @@ export function checkCsp(directives, { requiredOrigins = [] } = {}) {
 
 ```
 /*
-  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'none'; img-src 'self' data:; font-src 'self'; style-src 'self'; script-src 'self' https://static.cloudflareinsights.com; connect-src 'self' https://cloudflareinsights.com; frame-src https://giscus.app; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'none'; img-src 'self' data:; font-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; script-src 'self' https://static.cloudflareinsights.com; connect-src 'self' https://cloudflareinsights.com; frame-src https://giscus.app; upgrade-insecure-requests
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin

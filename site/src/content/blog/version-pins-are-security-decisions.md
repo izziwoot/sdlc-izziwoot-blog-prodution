@@ -36,7 +36,9 @@ pnpm audit --audit-level=high
 ```
 
 Every document I had produced was internally consistent and externally wrong. The
-build was the only thing with an opinion grounded in reality.
+build was the only thing with an opinion grounded in reality. The exit code and
+the severity counts come from [the pnpm audit command](https://pnpm.io/cli/audit),
+which reads the same advisory database the registry publishes.
 
 ## What I do differently now
 

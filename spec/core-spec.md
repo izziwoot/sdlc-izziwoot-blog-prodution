@@ -401,7 +401,7 @@ The realistic risks are therefore (a) supply chain, (b) secret leakage, and
 
 ```
 /*
-  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'none'; img-src 'self' data:; font-src 'self'; style-src 'self'; script-src 'self' https://static.cloudflareinsights.com; connect-src 'self' https://cloudflareinsights.com; frame-src https://giscus.app; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'none'; img-src 'self' data:; font-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; script-src 'self' https://static.cloudflareinsights.com; connect-src 'self' https://cloudflareinsights.com; frame-src https://giscus.app; upgrade-insecure-requests
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
@@ -421,6 +421,18 @@ The realistic risks are therefore (a) supply chain, (b) secret leakage, and
 
 Notes an implementer must not get wrong:
 
+- **`style-src-attr 'unsafe-inline'` is required and is not a mistake.** Verified
+  at Task 8 against real build output: Shiki emits inline `style` **attributes**
+  on `<pre>` and on each highlighted token (6 on the first post). CSP `style-src
+  'self'` covers inline style attributes as well as `<style>` elements, so the
+  policy as originally written would strip every syntax colour from every code
+  block — silently, with no build error. `style-src-attr` scopes the exception to
+  attributes only: `<style>` elements and external stylesheets stay forbidden.
+  The alternative, putting `'unsafe-inline'` in `style-src` itself, would also
+  permit `<style>` elements and is strictly worse.
+- **Therefore `checkCsp` must reject `'unsafe-inline'` in `script-src` and in
+  `style-src`, but permit it in `style-src-attr`.** A blanket rejection across all
+  directives makes the correct policy unrepresentable.
 - **No `'unsafe-inline'` in `script-src`.** This is what forces the JS-free theme
   decision in §5.1; an inline theme script would require it.
 - `style-src 'self'` requires Astro's scoped styles to be emitted as files, not

@@ -1,0 +1,75 @@
+---
+import TagList from '@/components/TagList.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import type { BlogEntry } from '@/lib/entries';
+import { formatDate, isoDate, readingTimeLabel } from '@/lib/format';
+import { postStatus } from '@/lib/status';
+import type { BlogFrontmatter } from '@/content/schema';
+
+type Correction = NonNullable<BlogFrontmatter['corrections']>[number];
+
+type Props = { post: BlogEntry; minutes: number };
+
+const { post, minutes } = Astro.props;
+const { data } = post;
+const status = postStatus(data);
+// Giscus mounts here in Task 14; the component does not exist yet.
+---
+<BaseLayout
+  title={data.title}
+  description={data.description}
+  path={`/blog/${post.id}/`}
+  type="article"
+  publishedTime={data.pubDate}
+  modifiedTime={status.showUpdated ? data.updatedDate : undefined}
+  canonicalOverride={data.canonicalUrl}
+>
+  <article>
+    <h1>{data.title}</h1>
+    <p class="post-meta">
+      <time datetime={isoDate(data.pubDate)}>{formatDate(data.pubDate)}</time>
+      <span aria-hidden="true">·</span>
+      <span>{readingTimeLabel(minutes)}</span>
+      <span aria-hidden="true">·</span>
+      <TagList tags={data.tags} />
+      {
+        status.showUpdated && data.updatedDate && (
+          <span class="updated">
+            Updated <time datetime={isoDate(data.updatedDate)}>{formatDate(data.updatedDate)}</time>
+          </span>
+        )
+      }
+    </p>
+
+    {
+      status.retracted && data.retracted && (
+        <aside class="retraction" role="note" aria-label="Retraction notice">
+          <p>
+            <strong>
+              Retracted on <time datetime={isoDate(data.retracted.date)}>{formatDate(data.retracted.date)}</time>.
+            </strong>
+          </p>
+          <p>{data.retracted.reason}</p>
+          <p>The text below is preserved unchanged for the record.</p>
+        </aside>
+      )
+    }
+
+    <div class="prose"><slot /></div>
+
+    {
+      status.hasCorrections && data.corrections && (
+        <section class="corrections" aria-labelledby="corrections-heading">
+          <h2 id="corrections-heading">Corrections</h2>
+          <ol>
+            {data.corrections.map((c: Correction) => (
+              <li>
+                <time datetime={isoDate(c.date)}>{formatDate(c.date)}</time> — {c.note}
+              </li>
+            ))}
+          </ol>
+        </section>
+      )
+    }
+  </article>
+</BaseLayout>

@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Build output
+site/dist/
+site/.astro/
+
+# Tooling output
+.lighthouseci/
+site/.output-baseline.json.tmp
+
+# Environment — never commit real values; SITE_URL and PUBLIC_* live in CI vars
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+*.swp

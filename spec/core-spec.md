@@ -99,8 +99,10 @@ This is INV-3's primary threat model, not a stylistic preference.
 | --- | --- | --- |
 | Node.js | `>=20.11 <23` — pinned via `.nvmrc` and `engines` | Must match the Cloudflare Pages build image |
 | Package manager | `pnpm`, version pinned via `packageManager` field | Lockfile committed; CI uses `--frozen-lockfile` |
-| Astro | `^5` | `output: 'static'` |
-| TypeScript | `strict: true` | `astro check` is a blocking gate |
+| Astro | `^7` | `output: 'static'`. Not `^5`: the critical advisory affecting Astro is patched only in 7.2.8, with no fix on the 5.x line, so `^5` cannot pass the blocking audit gate in §5.3. Verified 2026-09-28. |
+| TypeScript | `strict: true` | `astro check` is a blocking gate; requires the `@astrojs/check` package |
+| zod | `^4` | Astro 7 depends on `zod ^4.5.4`; mixing majors breaks typechecking and runtime schema generation |
+| Vitest | `^3` | Not `^2`: its critical advisory is patched only in 3.2.6. Do not add an explicit top-level `vite` — Vitest 3's peer range excludes Astro 7's vite 8, and two vite copies is the correct state |
 
 ### 2.3 Build and deploy
 

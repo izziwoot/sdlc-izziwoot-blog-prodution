@@ -72,6 +72,19 @@ listed tasks still contain code that **cannot run**:
 **Do not carry `post.slug` or `post.render()` into any new task.** Both are
 Astro 4 idioms that typecheck against nothing in this project.
 
+### ⚠️ Further Astro 7 findings, from the first real build (Task 7)
+
+| Finding | Consequence |
+| --- | --- |
+| **`remarkPlugins` / `rehypePlugins` need `@astrojs/markdown-remark` installed explicitly.** Astro 7 ships a different default Markdown processor and the unified pipeline is no longer bundled | Add it as a dependency. Tasks 7 and 8 both rely on it (reading time, heading slugs, autolinked headings, external-link `rel`) |
+| **A module that imports `astro:content` cannot be unit tested.** Vitest fails with `Cannot find package 'astro:content'` | Pure logic goes in `warnings.ts`; `entries.ts` keeps the `getCollection` calls and no decisions. Task 7's test imports `@/lib/warnings` |
+| **`import.meta.env` does surface unprefixed build-time variables.** Verified by building with the `process.env` fallback removed | `site.ts` needs no `process.env` merge. Only `PUBLIC_`-prefixed values reach the client, which is why the giscus and analytics ids carry the prefix and `SITE_URL` does not |
+| **Task 6 depends on Task 5**, not only Task 1 as the dependency table claimed | `BaseLayout` imports `global.css`, and the tokens style Task 5's header, footer, skip-link and post-meta classes |
+
+**The schema gate works on real content.** The first post was rejected at build
+time for a description over 160 characters — caught by CI, not by a reader,
+exactly as intent outcome #9 requires.
+
 ### Blocked-by-decision gate
 
 **Task 22 must not start** until §10.1 and §10.2 of the spec are resolved by a human and the `policies/` reviewer text is amended to match. Tasks 1–21 and 23 are unblocked and depend on nothing from that decision. Do not guess a branch-protection configuration.
@@ -374,7 +387,7 @@ const image = () => z.string();
 const schema = blogSchema({ image });
 
 const base = {
-  title: 'Choosing boring tools on purpose',
+  title: 'Version pins are security decisions',
   description:
     'Why the least exciting option in a technology decision is usually the one that survives contact with production, and how to tell the difference.',
   pubDate: '2026-09-01',
@@ -981,7 +994,7 @@ const ok = (file: string) => ({ file, author: 'adilson-cesar' });
 
 describe('checkFilenames', () => {
   it('accepts kebab-case markdown filenames', () => {
-    expect(checkFilenames({ files: [ok('choose-boring-tools.md')], reserved, authors })).toEqual([]);
+    expect(checkFilenames({ files: [ok('version-pins-are-security-decisions.md')], reserved, authors })).toEqual([]);
   });
 
   it('rejects a filename that is not kebab-case', () => {
@@ -1792,13 +1805,14 @@ git commit -m "feat(design): add original design tokens with machine-verified AA
 ### Task 7: Index route and post listing component
 
 **Files:**
-- Create: `site/src/lib/entries.ts`
+- Create: `site/src/lib/warnings.ts` (pure — the testable half)
+- Create: `site/src/lib/entries.ts` (imports `astro:content`; holds no logic)
 - Create: `site/src/components/PostCard.astro`
 - Create: `site/src/components/TagList.astro`
 - Create: `site/src/pages/index.astro`
-- Create: `site/src/content/blog/choose-boring-tools.md` (a real first post, to have something to render)
+- Create: `site/src/content/blog/version-pins-are-security-decisions.md` (a real first post, to have something to render)
 - Modify: `site/astro.config.mjs` — add `remark-reading-time`
-- Test: `site/tests/entries.test.ts`
+- Test: `site/tests/warnings.test.ts`
 
 **Interfaces:**
 - Consumes: `selectListable`, `selectPublished`, `futureDated`, `tagsWithCounts` from `@/lib/posts`; `formatDate`, `isoDate`, `readingTimeLabel` from `@/lib/format`; `site` from `@/config/site`.
@@ -2040,7 +2054,7 @@ drafted renders a sentence, not a crash or a blank page.
 
 ```markdown
 ---
-title: Choosing boring tools on purpose
+title: Version pins are security decisions
 description: Why the least exciting option in a technology decision is usually the one that survives contact with production, and how to tell the two apart.
 pubDate: 2026-09-28
 tags:
@@ -2067,7 +2081,7 @@ const retries = 3;
 cd site
 SITE_URL=http://localhost:4321 PUBLIC_GISCUS_REPO=izziwoot/x PUBLIC_GISCUS_REPO_ID=R_x \
   PUBLIC_GISCUS_CATEGORY_ID=DIC_x pnpm build
-grep -q "Choosing boring tools" dist/index.html && echo "index renders the post"
+grep -q "Version pins are security decisions" dist/index.html && echo "index renders the post"
 grep -q "min read" dist/index.html && echo "reading time present"
 ```
 
@@ -2331,39 +2345,39 @@ beforeAll(() => {
 
 describe('post route output', () => {
   it('emits the post at its canonical trailing-slash path', () => {
-    expect(existsSync(new URL('../dist/blog/choose-boring-tools/index.html', import.meta.url))).toBe(true);
+    expect(existsSync(new URL('../dist/blog/version-pins-are-security-decisions/index.html', import.meta.url))).toBe(true);
   });
 
   it('declares exactly one h1', () => {
-    const html = read('blog/choose-boring-tools/index.html');
+    const html = read('blog/version-pins-are-security-decisions/index.html');
     expect(html.match(/<h1[\s>]/g)).toHaveLength(1);
   });
 
   it('emits an absolute canonical link matching the route', () => {
-    expect(read('blog/choose-boring-tools/index.html')).toContain(
-      '<link rel="canonical" href="https://example.com/blog/choose-boring-tools/"',
+    expect(read('blog/version-pins-are-security-decisions/index.html')).toContain(
+      '<link rel="canonical" href="https://example.com/blog/version-pins-are-security-decisions/"',
     );
   });
 
   it('gives body headings stable ids for deep linking', () => {
-    expect(read('blog/choose-boring-tools/index.html')).toMatch(/<h2[^>]+id="the-bill-arrives-later"/);
+    expect(read('blog/version-pins-are-security-decisions/index.html')).toMatch(/<h2[^>]+id="the-pin-was-the-vulnerability"/);
   });
 
   it('highlights code at build time with no client-side highlighter', () => {
-    const html = read('blog/choose-boring-tools/index.html');
+    const html = read('blog/version-pins-are-security-decisions/index.html');
     expect(html).toContain('class="astro-code');
     expect(html).not.toMatch(/prism|highlight\.js/i);
   });
 
   it('ships no first-party script bundle on a text post', () => {
-    const html = read('blog/choose-boring-tools/index.html');
+    const html = read('blog/version-pins-are-security-decisions/index.html');
     const srcs = [...html.matchAll(/<script[^>]*src="([^"]+)"/g)].map((m) => m[1]);
     const firstParty = srcs.filter((s) => s.startsWith('/'));
     expect(firstParty).toEqual([]);
   });
 
   it('emits BlogPosting JSON-LD', () => {
-    expect(read('blog/choose-boring-tools/index.html')).toContain('"@type":"BlogPosting"');
+    expect(read('blog/version-pins-are-security-decisions/index.html')).toContain('"@type":"BlogPosting"');
   });
 });
 ```
@@ -2720,8 +2734,8 @@ describe('feed output', () => {
 
   it('uses absolute links and guids', () => {
     const xml = read('feed.xml');
-    expect(xml).toContain('<link>https://example.com/blog/choose-boring-tools/</link>');
-    expect(xml).toContain('<guid isPermaLink="true">https://example.com/blog/choose-boring-tools/</guid>');
+    expect(xml).toContain('<link>https://example.com/blog/version-pins-are-security-decisions/</link>');
+    expect(xml).toContain('<guid isPermaLink="true">https://example.com/blog/version-pins-are-security-decisions/</guid>');
   });
 
   it('declares a self link and a language', () => {
@@ -2742,12 +2756,12 @@ cd site && pnpm add -D fast-xml-parser
 
 ```bash
 cd site
-sed -i.bak 's/^title: Choosing boring tools on purpose$/title: Tabs \& spaces \& other <holy> wars/' \
-  src/content/blog/choose-boring-tools.md
+sed -i.bak 's/^title: Version pins are security decisions$/title: Tabs \& spaces \& other <holy> wars/' \
+  src/content/blog/version-pins-are-security-decisions.md
 SITE_URL=https://example.com PUBLIC_GISCUS_REPO=izziwoot/x PUBLIC_GISCUS_REPO_ID=R_x \
   PUBLIC_GISCUS_CATEGORY_ID=DIC_x pnpm build
 node -e "const{XMLValidator}=require('fast-xml-parser');const fs=require('fs');const r=XMLValidator.validate(fs.readFileSync('dist/feed.xml','utf8'));if(r!==true){console.error(r);process.exit(1)}console.log('feed still valid with & and < in the title')"
-mv src/content/blog/choose-boring-tools.md.bak src/content/blog/choose-boring-tools.md
+mv src/content/blog/version-pins-are-security-decisions.md.bak src/content/blog/version-pins-are-security-decisions.md
 ```
 
 Expected: the node check prints the success line. If it fails, the escaping is
@@ -3091,7 +3105,7 @@ describe('discovery', () => {
 
   it('lists the published post in the sitemap', () => {
     const xml = read('sitemap-0.xml');
-    expect(xml).toContain('https://example.com/blog/choose-boring-tools/');
+    expect(xml).toContain('https://example.com/blog/version-pins-are-security-decisions/');
   });
 
   it('excludes the 404 page from the sitemap', () => {
@@ -3113,27 +3127,27 @@ describe('discovery', () => {
 
 ```bash
 cd site
-cp src/content/blog/choose-boring-tools.md /tmp/post-backup.md
-cat >> src/content/blog/choose-boring-tools.md.tmp <<'EOF'
+cp src/content/blog/version-pins-are-security-decisions.md /tmp/post-backup.md
+cat >> src/content/blog/version-pins-are-security-decisions.md.tmp <<'EOF'
 EOF
 # Insert a retraction into the front matter, rebuild, and confirm the URL still
 # resolves while disappearing from the sitemap and the feed.
 python3 - <<'PY'
 import re, pathlib
-p = pathlib.Path('src/content/blog/choose-boring-tools.md')
+p = pathlib.Path('src/content/blog/version-pins-are-security-decisions.md')
 text = p.read_text()
 text = text.replace('tags:', 'retracted:\n  date: 2026-09-29\n  reason: The central claim does not hold under load.\ntags:', 1)
 p.write_text(text)
 PY
 SITE_URL=https://example.com PUBLIC_GISCUS_REPO=izziwoot/x PUBLIC_GISCUS_REPO_ID=R_x \
   PUBLIC_GISCUS_CATEGORY_ID=DIC_x pnpm build
-test -f dist/blog/choose-boring-tools/index.html && echo "URL preserved (INV-5)"
-grep -q "Retracted on" dist/blog/choose-boring-tools/index.html && echo "banner rendered"
-grep -q "choose-boring-tools" dist/index.html && echo "FAIL: still in index" || echo "absent from index"
-grep -q "choose-boring-tools" dist/feed.xml && echo "FAIL: still in feed" || echo "absent from feed"
-grep -q "choose-boring-tools" dist/sitemap-0.xml && echo "FAIL: still in sitemap" || echo "absent from sitemap"
-cp /tmp/post-backup.md src/content/blog/choose-boring-tools.md
-rm -f src/content/blog/choose-boring-tools.md.tmp
+test -f dist/blog/version-pins-are-security-decisions/index.html && echo "URL preserved (INV-5)"
+grep -q "Retracted on" dist/blog/version-pins-are-security-decisions/index.html && echo "banner rendered"
+grep -q "version-pins-are-security-decisions" dist/index.html && echo "FAIL: still in index" || echo "absent from index"
+grep -q "version-pins-are-security-decisions" dist/feed.xml && echo "FAIL: still in feed" || echo "absent from feed"
+grep -q "version-pins-are-security-decisions" dist/sitemap-0.xml && echo "FAIL: still in sitemap" || echo "absent from sitemap"
+cp /tmp/post-backup.md src/content/blog/version-pins-are-security-decisions.md
+rm -f src/content/blog/version-pins-are-security-decisions.md.tmp
 ```
 
 Expected: `URL preserved`, `banner rendered`, and three `absent from …` lines. Any
@@ -3252,13 +3266,13 @@ describe('images and diagrams', () => {
   it('emits optimized image variants when a post uses a cover or figure', () => {
     // Skipped until the first post ships an image; the assertion below is the
     // permanent guard that raw <img> to /public never creeps back in.
-    const html = read('blog/choose-boring-tools/index.html');
+    const html = read('blog/version-pins-are-security-decisions/index.html');
     const rawImgs = [...html.matchAll(/<img[^>]+src="\/(?!_astro)([^"]+)"/g)];
     expect(rawImgs).toEqual([]);
   });
 
   it('never emits an image without an alt attribute', () => {
-    const html = read('blog/choose-boring-tools/index.html');
+    const html = read('blog/version-pins-are-security-decisions/index.html');
     const imgs = [...html.matchAll(/<img\b[^>]*>/g)].map((m) => m[0]);
     for (const img of imgs) expect(img).toMatch(/\balt="/);
   });
@@ -3353,7 +3367,7 @@ Append to `site/src/styles/global.css`:
 ```ts
 describe('comments', () => {
   it('embeds giscus on a post page', () => {
-    const html = read('blog/choose-boring-tools/index.html');
+    const html = read('blog/version-pins-are-security-decisions/index.html');
     expect(html).toContain('https://giscus.app/client.js');
     expect(html).toContain('data-mapping="pathname"');
     expect(html).toContain('data-strict="1"');
@@ -3367,11 +3381,11 @@ describe('comments', () => {
   });
 
   it('tells readers without a GitHub account how to reach the author instead', () => {
-    expect(read('blog/choose-boring-tools/index.html')).toMatch(/need a GitHub account/i);
+    expect(read('blog/version-pins-are-security-decisions/index.html')).toMatch(/need a GitHub account/i);
   });
 
   it('loads exactly two third-party origins on a post page and no more', () => {
-    const html = read('blog/choose-boring-tools/index.html');
+    const html = read('blog/version-pins-are-security-decisions/index.html');
     const origins = new Set(
       [...html.matchAll(/(?:src|href)="https?:\/\/([^/"]+)/g)].map((m) => m[1]),
     );
@@ -4071,20 +4085,20 @@ pnpm build && pnpm lint:links               # expect: 0 broken
 # Break an internal link and confirm it is caught.
 python3 - <<'PY'
 import pathlib
-p = pathlib.Path('src/content/blog/choose-boring-tools.md')
+p = pathlib.Path('src/content/blog/version-pins-are-security-decisions.md')
 p.write_text(p.read_text() + '\n[a dead internal link](/blog/does-not-exist/)\n')
 PY
 pnpm build && pnpm lint:links               # expect: exit 1, names /blog/does-not-exist/
-git checkout src/content/blog/choose-boring-tools.md
+git checkout src/content/blog/version-pins-are-security-decisions.md
 
 # Confirm a broken ANCHOR is caught too — the subtler failure.
 python3 - <<'PY'
 import pathlib
-p = pathlib.Path('src/content/blog/choose-boring-tools.md')
+p = pathlib.Path('src/content/blog/version-pins-are-security-decisions.md')
 p.write_text(p.read_text() + '\n[a dead anchor](#no-such-heading)\n')
 PY
 pnpm build && pnpm lint:links               # expect: exit 1
-git checkout src/content/blog/choose-boring-tools.md
+git checkout src/content/blog/version-pins-are-security-decisions.md
 ```
 
 Expected: both broken cases exit non-zero. `include-fragments = true` is what makes
@@ -4125,7 +4139,7 @@ claim. Task 23 adds the manual pass this gate cannot replace.
       "numberOfRuns": 3,
       "url": [
         "http://localhost/index.html",
-        "http://localhost/blog/choose-boring-tools/index.html",
+        "http://localhost/blog/version-pins-are-security-decisions/index.html",
         "http://localhost/blog/tags/index.html",
         "http://localhost/about/index.html"
       ],
@@ -4198,7 +4212,7 @@ Measured with Lighthouse CI, 3 runs, median, mobile emulation, against `site/dis
 | URL | Performance | Accessibility | LCP (ms) | CLS |
 | --- | --- | --- | --- | --- |
 | `/` | | | | |
-| `/blog/choose-boring-tools/` | | | | |
+| `/blog/version-pins-are-security-decisions/` | | | | |
 | `/blog/tags/` | | | | |
 | `/about/` | | | | |
 
@@ -4747,8 +4761,8 @@ grep -qi "strict-transport-security: max-age=63072000" /tmp/headers.txt && echo 
 grep -qi "x-content-type-options: nosniff" /tmp/headers.txt && echo "nosniff served"
 
 # Canonical URL correctness on the live origin.
-curl -sS "https://$DOMAIN/blog/choose-boring-tools/" | grep -o '<link rel="canonical"[^>]*>'
-# Expect: href="https://$DOMAIN/blog/choose-boring-tools/"
+curl -sS "https://$DOMAIN/blog/version-pins-are-security-decisions/" | grep -o '<link rel="canonical"[^>]*>'
+# Expect: href="https://$DOMAIN/blog/version-pins-are-security-decisions/"
 
 # Redirects.
 for path in /blog /feed /rss.xml; do

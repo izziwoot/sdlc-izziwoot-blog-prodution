@@ -1,0 +1,29 @@
+---
+import TagList from '@/components/TagList.astro';
+import { formatDate, isoDate, readingTimeLabel } from '@/lib/format';
+
+type Props = {
+  /** The entry id, which is the URL segment under /blog/. */
+  slug: string;
+  title: string;
+  pubDate: Date;
+  minutes: number;
+  tags: readonly string[];
+  draft?: boolean;
+};
+
+const { slug, title, pubDate, minutes, tags, draft = false } = Astro.props;
+---
+<article class="post-card">
+  <h2>
+    <a href={`/blog/${slug}/`}>{title}</a>
+    {draft && <span class="badge">draft</span>}
+  </h2>
+  <p class="post-meta">
+    <time datetime={isoDate(pubDate)}>{formatDate(pubDate)}</time>
+    <span aria-hidden="true">·</span>
+    <span>{readingTimeLabel(minutes)}</span>
+    <span aria-hidden="true">·</span>
+    <TagList tags={tags} />
+  </p>
+</article>

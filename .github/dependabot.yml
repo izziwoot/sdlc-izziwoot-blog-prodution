@@ -1,0 +1,16 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /site
+    schedule:
+      interval: weekly
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  # Matters more than the npm entry: this is what stops the SHA-pinned actions
+  # above from silently ageing into unpatched versions.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

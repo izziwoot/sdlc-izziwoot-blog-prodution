@@ -1,0 +1,50 @@
+name: links-weekly
+
+# External links are checked here and NEVER in the blocking site workflow
+# (spec §10.7): a blocking external check fails the pipeline because someone
+# else's server had a bad minute. Rot is reported within a week instead.
+on:
+  schedule:
+    - cron: '23 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  external:
+    runs-on: ubuntu-latest
+    env:
+      SITE_URL: ${{ vars.SITE_URL || 'https://example.com' }}
+      PUBLIC_GISCUS_REPO: ${{ vars.PUBLIC_GISCUS_REPO || 'izziwoot/placeholder' }}
+      PUBLIC_GISCUS_REPO_ID: ${{ vars.PUBLIC_GISCUS_REPO_ID || 'R_placeholder' }}
+      PUBLIC_GISCUS_CATEGORY_ID: ${{ vars.PUBLIC_GISCUS_CATEGORY_ID || 'DIC_placeholder' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: site/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: site
+      - run: pnpm build
+        working-directory: site
+
+      - name: Check external links
+        id: lychee
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          args: --no-progress --exclude-path site/dist/feed.xml site/dist
+          fail: false
+          output: lychee-report.md
+
+      - name: Open or update a rot report
+        if: steps.lychee.outputs.exit_code != 0
+        uses: peter-evans/create-issue-from-file@fca9117c27cdc29c6c4db3b86c48e4115a786710 # v6.0.0
+        with:
+          title: Weekly external link report
+          content-filepath: lychee-report.md
+          labels: link-rot

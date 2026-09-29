@@ -61,7 +61,9 @@ implemented as literally written, including two that still need a human decision
 ```bash
 # Node version is pinned; use fnm, nvm, or any .nvmrc-aware manager.
 fnm use                      # reads .nvmrc -> 22.23.3
-corepack-free: npm i -g pnpm@9
+
+# Node 22 no longer bundles corepack, so install pnpm directly:
+npm install -g pnpm@9
 
 cd site
 pnpm install --frozen-lockfile

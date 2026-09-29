@@ -1,4 +1,6 @@
+import { readdirSync, readFileSync } from 'node:fs';
 import { defineConfig } from 'astro/config';
+import sitemap from '@astrojs/sitemap';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeExternalLinks from 'rehype-external-links';
 import rehypeSlug from 'rehype-slug';
@@ -18,6 +20,27 @@ function rehypePreTabindex() {
   return (tree) => walk(tree);
 }
 
+/**
+ * Slugs of retracted posts, read straight from front matter. @astrojs/sitemap
+ * cannot see front matter, so the exclusion list is computed at config time.
+ * A retracted post keeps its URL (INV-5) but must not be advertised.
+ */
+function retractedSlugs() {
+  const dir = new URL('./src/content/blog/', import.meta.url);
+  let files = [];
+  try {
+    files = readdirSync(dir);
+  } catch {
+    return [];
+  }
+  return files
+    .filter((f) => /\.mdx?$/.test(f))
+    .filter((f) => /^retracted:/m.test(readFileSync(new URL(f, dir), 'utf8')))
+    .map((f) => f.replace(/\.mdx?$/, ''));
+}
+
+const EXCLUDED = retractedSlugs();
+
 export default defineConfig({
   site: process.env.SITE_URL ?? 'http://localhost:4321',
   output: 'static',
@@ -25,6 +48,12 @@ export default defineConfig({
   // Load-bearing: inlined <style> blocks would be blocked by the
   // style-src 'self' CSP added in Task 15.
   build: { inlineStylesheets: 'never' },
+  integrations: [
+    sitemap({
+      filter: (page) =>
+        !page.includes('/404') && !EXCLUDED.some((slug) => page.includes(`/blog/${slug}/`)),
+    }),
+  ],
   markdown: {
     remarkPlugins: [remarkReadingTime],
     rehypePlugins: [

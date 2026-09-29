@@ -64,7 +64,7 @@ listed tasks still contain code that **cannot run**:
 | Finding | Consequence |
 | --- | --- |
 | **`slug` does not exist.** `grep slug .astro/content.d.ts` returns nothing; entries are keyed by `id`, and `ReferenceDataEntry` is `{ collection, id }` | Every `post.slug` in Tasks 3, 7, 8, 9, 10, 12 becomes `post.id`. Affects route params, `PostCard`, feed link/guid construction, and the sitemap exclusion list |
-| **`render` is a standalone export**, not a method: `export function render<C extends keyof DataEntryMap>(...)` | `await post.render()` in Tasks 7, 8, 9 becomes `await render(post)` with `import { render } from 'astro:content'`. `RenderResult` still carries `Content`, `headings`, and `remarkPluginFrontmatter`, so reading time is unaffected |
+| **`render` is a standalone export**, not a method: `export function render<C extends keyof DataEntryMap>(...)` | `await render(post)` in Tasks 7, 8, 9 becomes `await render(post)` with `import { render } from 'astro:content'`. `RenderResult` still carries `Content`, `headings`, and `remarkPluginFrontmatter`, so reading time is unaffected |
 | **The config file is `src/content.config.ts`** — Astro 6 removed legacy content collections and throws `LegacyContentConfigError` for `src/content/config.ts` | The file-structure table above and Task 2 are corrected. Note the relative import becomes `./content/schema` |
 | **Collections need `loader: glob(...)`** from `astro/loaders`, not `type: 'content'` | The glob loader derives `id` from the filename, which is what keeps GC-13 true |
 | **zod must be `^4`.** Astro 7 depends on `zod ^4.5.4` | Mixing majors breaks typechecking *and* runtime: zod 3 schemas make Astro's JSON-schema generation throw `Cannot read properties of undefined (reading 'def')`. zod 4 idioms: `required_error` → `error`, `z.string().url()` → `z.url()` |
@@ -652,7 +652,7 @@ git commit -m "feat(content): add typed blog and author schemas with build-faili
 **Interfaces:**
 - Consumes: `TAGS`, `BlogFrontmatter` from `@/content/schema`.
 - Produces:
-  - `type PostLike = { id: string; slug: string; data: Pick<BlogFrontmatter, 'pubDate'|'draft'|'tags'|'retracted'|'updatedDate'> }`
+  - `type PostLike = { id: string; data: Pick<BlogFrontmatter, 'pubDate'|'draft'|'tags'|'retracted'|'updatedDate'> }` — **no `slug`**: Astro 7 entries are keyed by `id`
   - `selectPublished<T extends PostLike>(posts: T[], opts: { now: Date; includeDrafts: boolean }): T[]`
   - `selectListable<T extends PostLike>(posts: T[], opts): T[]` — published minus retracted
   - `futureDated<T extends PostLike>(posts: T[], now: Date): T[]`
@@ -676,11 +676,11 @@ import {
 
 const NOW = new Date('2026-09-28T00:00:00Z');
 
-const post = (over: Partial<PostLike['data']> & { slug: string }): PostLike => {
-  const { slug, ...data } = over;
+const post = (over: Partial<PostLike['data']> & { id: string }): PostLike => {
+  const { id, ...data } = over;
   return {
-    id: `${slug}.md`,
-    slug,
+    // Astro 7's glob loader derives `id` from the filename, without extension.
+    id,
     data: { pubDate: new Date('2026-01-01'), draft: false, tags: ['ai'], ...data },
   };
 };
@@ -691,36 +691,36 @@ describe('selectPublished', () => {
   });
 
   it('excludes drafts in production mode', () => {
-    const posts = [post({ slug: 'a' }), post({ slug: 'b', draft: true })];
-    expect(selectPublished(posts, { now: NOW, includeDrafts: false }).map((p) => p.slug)).toEqual(['a']);
+    const posts = [post({ id: 'a' }), post({ id: 'b', draft: true })];
+    expect(selectPublished(posts, { now: NOW, includeDrafts: false }).map((p) => p.id)).toEqual(['a']);
   });
 
   it('includes drafts when includeDrafts is set, for dev and preview builds', () => {
-    const posts = [post({ slug: 'a' }), post({ slug: 'b', draft: true })];
+    const posts = [post({ id: 'a' }), post({ id: 'b', draft: true })];
     expect(selectPublished(posts, { now: NOW, includeDrafts: true })).toHaveLength(2);
   });
 
   it('excludes a future-dated post from production output', () => {
-    const posts = [post({ slug: 'future', pubDate: new Date('2026-12-25') })];
+    const posts = [post({ id: 'future', pubDate: new Date('2026-12-25') })];
     expect(selectPublished(posts, { now: NOW, includeDrafts: false })).toEqual([]);
   });
 
   it('includes a future-dated post when drafts are included', () => {
-    const posts = [post({ slug: 'future', pubDate: new Date('2026-12-25') })];
+    const posts = [post({ id: 'future', pubDate: new Date('2026-12-25') })];
     expect(selectPublished(posts, { now: NOW, includeDrafts: true })).toHaveLength(1);
   });
 
   it('treats a post dated exactly now as published', () => {
-    const posts = [post({ slug: 'boundary', pubDate: NOW })];
+    const posts = [post({ id: 'boundary', pubDate: NOW })];
     expect(selectPublished(posts, { now: NOW, includeDrafts: false })).toHaveLength(1);
   });
 
   it('orders by pubDate descending', () => {
     const posts = [
-      post({ slug: 'old', pubDate: new Date('2026-01-01') }),
-      post({ slug: 'new', pubDate: new Date('2026-06-01') }),
+      post({ id: 'old', pubDate: new Date('2026-01-01') }),
+      post({ id: 'new', pubDate: new Date('2026-06-01') }),
     ];
-    expect(selectPublished(posts, { now: NOW, includeDrafts: false }).map((p) => p.slug)).toEqual([
+    expect(selectPublished(posts, { now: NOW, includeDrafts: false }).map((p) => p.id)).toEqual([
       'new',
       'old',
     ]);
@@ -729,39 +729,39 @@ describe('selectPublished', () => {
   it('breaks a pubDate tie by id ascending, so ordering is deterministic across machines', () => {
     const same = new Date('2026-05-05');
     const posts = [
-      post({ slug: 'zebra', pubDate: same }),
-      post({ slug: 'alpha', pubDate: same }),
+      post({ id: 'zebra', pubDate: same }),
+      post({ id: 'alpha', pubDate: same }),
     ];
-    const ordered = selectPublished(posts, { now: NOW, includeDrafts: false }).map((p) => p.slug);
+    const ordered = selectPublished(posts, { now: NOW, includeDrafts: false }).map((p) => p.id);
     expect(ordered).toEqual(['alpha', 'zebra']);
     // Running it twice must not change the answer.
-    expect(selectPublished([...posts].reverse(), { now: NOW, includeDrafts: false }).map((p) => p.slug))
+    expect(selectPublished([...posts].reverse(), { now: NOW, includeDrafts: false }).map((p) => p.id))
       .toEqual(['alpha', 'zebra']);
   });
 
   it('does not mutate the input array', () => {
-    const posts = [post({ slug: 'b', pubDate: new Date('2026-01-01') }), post({ slug: 'a', pubDate: new Date('2026-02-01') })];
-    const before = posts.map((p) => p.slug);
+    const posts = [post({ id: 'b', pubDate: new Date('2026-01-01') }), post({ id: 'a', pubDate: new Date('2026-02-01') })];
+    const before = posts.map((p) => p.id);
     selectPublished(posts, { now: NOW, includeDrafts: false });
-    expect(posts.map((p) => p.slug)).toEqual(before);
+    expect(posts.map((p) => p.id)).toEqual(before);
   });
 });
 
 describe('selectListable', () => {
   it('excludes retracted posts from listings while selectPublished still yields them for routing', () => {
     const posts = [
-      post({ slug: 'ok' }),
-      post({ slug: 'gone', retracted: { date: NOW, reason: 'x'.repeat(20) } }),
+      post({ id: 'ok' }),
+      post({ id: 'gone', retracted: { date: NOW, reason: 'x'.repeat(20) } }),
     ];
-    expect(selectListable(posts, { now: NOW, includeDrafts: false }).map((p) => p.slug)).toEqual(['ok']);
+    expect(selectListable(posts, { now: NOW, includeDrafts: false }).map((p) => p.id)).toEqual(['ok']);
     expect(selectPublished(posts, { now: NOW, includeDrafts: false })).toHaveLength(2);
   });
 });
 
 describe('futureDated', () => {
   it('reports future-dated posts so the build can warn about them', () => {
-    const posts = [post({ slug: 'now' }), post({ slug: 'later', pubDate: new Date('2027-01-01') })];
-    expect(futureDated(posts, NOW).map((p) => p.slug)).toEqual(['later']);
+    const posts = [post({ id: 'now' }), post({ id: 'later', pubDate: new Date('2027-01-01') })];
+    expect(futureDated(posts, NOW).map((p) => p.id)).toEqual(['later']);
   });
 });
 
@@ -771,33 +771,33 @@ describe('groupByTag', () => {
   });
 
   it('omits tags with no posts entirely, so no empty tag page is generated', () => {
-    const grouped = groupByTag([post({ slug: 'a', tags: ['ai'] })]);
+    const grouped = groupByTag([post({ id: 'a', tags: ['ai'] })]);
     expect([...grouped.keys()]).toEqual(['ai']);
     expect(grouped.has('devops')).toBe(false);
   });
 
   it('places a multi-tagged post under each of its tags', () => {
-    const grouped = groupByTag([post({ slug: 'a', tags: ['ai', 'security'] })]);
+    const grouped = groupByTag([post({ id: 'a', tags: ['ai', 'security'] })]);
     expect(grouped.get('ai')?.[0]?.slug).toBe('a');
     expect(grouped.get('security')?.[0]?.slug).toBe('a');
   });
 
   it('preserves the incoming order within each tag group', () => {
     const grouped = groupByTag([
-      post({ slug: 'newer', pubDate: new Date('2026-06-01'), tags: ['ai'] }),
-      post({ slug: 'older', pubDate: new Date('2026-01-01'), tags: ['ai'] }),
+      post({ id: 'newer', pubDate: new Date('2026-06-01'), tags: ['ai'] }),
+      post({ id: 'older', pubDate: new Date('2026-01-01'), tags: ['ai'] }),
     ]);
-    expect(grouped.get('ai')?.map((p) => p.slug)).toEqual(['newer', 'older']);
+    expect(grouped.get('ai')?.map((p) => p.id)).toEqual(['newer', 'older']);
   });
 });
 
 describe('tagsWithCounts', () => {
   it('sorts by count descending, then tag name ascending for a stable list', () => {
     const posts = [
-      post({ slug: 'a', tags: ['ai'] }),
-      post({ slug: 'b', tags: ['ai'] }),
-      post({ slug: 'c', tags: ['security'] }),
-      post({ slug: 'd', tags: ['devops'] }),
+      post({ id: 'a', tags: ['ai'] }),
+      post({ id: 'b', tags: ['ai'] }),
+      post({ id: 'c', tags: ['security'] }),
+      post({ id: 'd', tags: ['devops'] }),
     ];
     expect(tagsWithCounts(posts)).toEqual([
       { tag: 'ai', count: 2 },
@@ -1937,7 +1937,7 @@ export default defineConfig({
 ```
 
 `remark-reading-time` writes `data.astro.frontmatter.readingTime` with a `minutes`
-field. Read it via `post.render()`'s `remarkPluginFrontmatter`.
+field. Read it via `render(post)`'s `remarkPluginFrontmatter` (`render` is imported from `astro:content`; it is not a method on the entry).
 
 - [ ] **Step 6: Write the components and the index page**
 
@@ -1993,6 +1993,7 @@ const { slug, title, pubDate, minutes, tags, draft = false } = Astro.props;
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import PostCard from '@/components/PostCard.astro';
 import { site } from '@/config/site';
+import { render } from 'astro:content';
 import { getListablePosts, warnAboutFutureDated, warnAboutVolume } from '@/lib/entries';
 import { getCollection } from 'astro:content';
 
@@ -2002,7 +2003,7 @@ warnAboutVolume(posts.length);
 
 const withReadingTime = await Promise.all(
   posts.map(async (post) => {
-    const { remarkPluginFrontmatter } = await post.render();
+    const { remarkPluginFrontmatter } = await render(post);
     return { post, minutes: remarkPluginFrontmatter.readingTime?.minutes ?? 1 };
   }),
 );
@@ -2020,7 +2021,7 @@ const withReadingTime = await Promise.all(
   ) : (
     withReadingTime.map(({ post, minutes }) => (
       <PostCard
-        slug={post.slug}
+        slug={post.id}
         title={post.data.title}
         pubDate={post.data.pubDate}
         minutes={minutes}
@@ -2227,7 +2228,7 @@ const status = postStatus(data);
 <BaseLayout
   title={data.title}
   description={data.description}
-  path={`/blog/${post.slug}/`}
+  path={`/blog/${post.id}/`}
   type="article"
   publishedTime={data.pubDate}
   modifiedTime={status.showUpdated ? data.updatedDate : undefined}
@@ -2282,16 +2283,17 @@ it, per spec FR-10 and FR-11. Both are `<aside>`/`<section>` with accessible nam
 ```astro
 ---
 import PostLayout from '@/layouts/PostLayout.astro';
+import { render } from 'astro:content';
 import { getPublishedPosts } from '@/lib/entries';
 import type { GetStaticPaths } from 'astro';
 
 export const getStaticPaths: GetStaticPaths = async () => {
   const posts = await getPublishedPosts();
-  return posts.map((post) => ({ params: { slug: post.slug }, props: { post } }));
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
 };
 
 const { post } = Astro.props;
-const { Content, remarkPluginFrontmatter } = await post.render();
+const { Content, remarkPluginFrontmatter } = await render(post);
 const minutes = remarkPluginFrontmatter.readingTime?.minutes ?? 1;
 ---
 <PostLayout post={post} minutes={minutes}>
@@ -2431,6 +2433,7 @@ const tags = tagsWithCounts(await getListablePosts());
 // site/src/pages/blog/tags/[tag].astro
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import PostCard from '@/components/PostCard.astro';
+import { render } from 'astro:content';
 import { getListablePosts } from '@/lib/entries';
 import { groupByTag } from '@/lib/posts';
 import type { GetStaticPaths } from 'astro';
@@ -2444,7 +2447,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
 const { tag, posts } = Astro.props;
 const withReadingTime = await Promise.all(
   posts.map(async (post) => {
-    const { remarkPluginFrontmatter } = await post.render();
+    const { remarkPluginFrontmatter } = await render(post);
     return { post, minutes: remarkPluginFrontmatter.readingTime?.minutes ?? 1 };
   }),
 );
@@ -2458,7 +2461,7 @@ const withReadingTime = await Promise.all(
   <p class="post-meta"><a href="/blog/tags/">All topics</a></p>
   {withReadingTime.map(({ post, minutes }) => (
     <PostCard
-      slug={post.slug}
+      slug={post.id}
       title={post.data.title}
       pubDate={post.data.pubDate}
       minutes={minutes}
@@ -2557,7 +2560,7 @@ describe('toFeedItems', () => {
   });
 
   it('uses an absolute link and an identical absolute guid', () => {
-    const [item] = toFeedItems([post({ slug: 'a-post' })], ORIGIN);
+    const [item] = toFeedItems([post({ id: 'a-post' })], ORIGIN);
     expect(item.link).toBe('https://example.com/blog/a-post/');
     expect(item.guid).toBe('https://example.com/blog/a-post/');
   });
@@ -2569,8 +2572,8 @@ describe('toFeedItems', () => {
   });
 
   it('keeps the guid stable when a post is corrected, so readers do not re-surface it', () => {
-    const before = toFeedItems([post({ slug: 'a-post' })], ORIGIN)[0];
-    const after = toFeedItems([post({ slug: 'a-post', updatedDate: new Date('2026-06-01') })], ORIGIN)[0];
+    const before = toFeedItems([post({ id: 'a-post' })], ORIGIN)[0];
+    const after = toFeedItems([post({ id: 'a-post', updatedDate: new Date('2026-06-01') })], ORIGIN)[0];
     expect(after.guid).toBe(before.guid);
     expect(after.pubDate).toEqual(before.pubDate);
   });
@@ -2592,19 +2595,19 @@ describe('feedLastBuildDate', () => {
 
   it('uses the most recent updatedDate when one is newer than every pubDate', () => {
     const posts = [
-      post({ slug: 'a', pubDate: new Date('2026-01-01'), updatedDate: new Date('2026-07-01') }),
-      post({ slug: 'b', pubDate: new Date('2026-03-01') }),
+      post({ id: 'a', pubDate: new Date('2026-01-01'), updatedDate: new Date('2026-07-01') }),
+      post({ id: 'b', pubDate: new Date('2026-03-01') }),
     ];
     expect(feedLastBuildDate(posts, fallback)).toEqual(new Date('2026-07-01'));
   });
 
   it('uses the newest pubDate when no post has been updated', () => {
-    const posts = [post({ slug: 'a', pubDate: new Date('2026-01-01') }), post({ slug: 'b', pubDate: new Date('2026-03-01') })];
+    const posts = [post({ id: 'a', pubDate: new Date('2026-01-01') }), post({ id: 'b', pubDate: new Date('2026-03-01') })];
     expect(feedLastBuildDate(posts, fallback)).toEqual(new Date('2026-03-01'));
   });
 
   it('does not use build wall-clock time, so an unchanged rebuild does not churn the feed', () => {
-    const posts = [post({ slug: 'a', pubDate: new Date('2026-01-01') })];
+    const posts = [post({ id: 'a', pubDate: new Date('2026-01-01') })];
     expect(feedLastBuildDate(posts, fallback)).toEqual(new Date('2026-01-01'));
   });
 });
@@ -2632,7 +2635,7 @@ export type FeedItem = {
 
 export function toFeedItems(posts: FeedSource[], origin: string): FeedItem[] {
   return posts.map((post) => {
-    const url = absoluteUrl(`/blog/${post.slug}/`, origin);
+    const url = absoluteUrl(`/blog/${post.id}/`, origin);
     return {
       title: post.data.title,
       link: url,

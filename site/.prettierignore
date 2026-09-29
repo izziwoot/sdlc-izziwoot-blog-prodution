@@ -5,6 +5,11 @@ public/fonts
 pnpm-lock.yaml
 .output-baseline.json
 
+# Generated Lighthouse reports. Gitignored, but prettier does not read
+# .gitignore — without this, format:check fails for anyone who has run the
+# performance gate locally.
+.lighthouseci
+
 # Markdown content is NOT formatted: reflowing an author's prose produces a noisy
 # diff on every save and fights the writing. markdownlint handles structure.
 src/content

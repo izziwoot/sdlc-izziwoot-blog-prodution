@@ -1,0 +1,42 @@
+title = "Izzi Woot blog secret scan"
+
+[extend]
+useDefault = true
+
+# Public-by-design identifiers. These are embedded in the page deliberately and
+# are not secrets, but generic high-entropy rules flag their VALUES. The allowlist
+# matches the identifier NAMES, so a real credential pasted elsewhere is still
+# caught — this does not blanket-permit anything that appears near them.
+[[allowlists]]
+description = "Public Giscus and Cloudflare identifiers, embedded in the page by design"
+regexTarget = "line"
+regexes = [
+  '''PUBLIC_GISCUS_REPO_ID''',
+  '''PUBLIC_GISCUS_CATEGORY_ID''',
+  '''PUBLIC_CF_BEACON_TOKEN''',
+]
+
+[[allowlists]]
+description = "Lockfile integrity hashes are not secrets"
+paths = ['''pnpm-lock\.yaml$''']
+
+[[allowlists]]
+description = "Planning docs describe the detection patterns themselves, so the scanner matches its own rules. condition=AND means BOTH path and pattern must match, so this permits exactly these documented strings in exactly these files; a real credential pasted into plan/ is still caught."
+condition = "AND"
+paths = ['''^(plan|spec|intent)/.*\.md$''']
+regexes = [
+  '''REPLACE_WITH_CLIENT_NAME''',
+  '''BEGIN (?:RSA |EC |OPENSSH |PGP )?PRIVATE KEY''',
+]
+
+# The rule that will actually save a draft. Generic rules catch API keys; nothing
+# generic catches a client's name or an internal hostname in a war story — and
+# this repository is public, so a leak is instantly global.
+#
+# FILL THIS IN before writing any post about real work. An empty placeholder
+# protects nothing.
+[[rules]]
+id = "izziwoot-internal-disclosure"
+description = "Internal hostname or client name that must not appear in a public post"
+regex = '''(?i)(REPLACE_WITH_CLIENT_NAME|\.internal\.example\.com)'''
+tags = ["disclosure"]

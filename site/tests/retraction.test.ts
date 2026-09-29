@@ -55,6 +55,11 @@ afterAll(() => {
   if (existsSync(backupFile)) {
     copyFileSync(backupFile, postFile);
     unlinkSync(backupFile);
+    // Rebuild, not just restore. Otherwise dist/ is left describing a retracted
+    // post, and anything reading it afterwards — verify:output recording a size
+    // baseline, a human inspecting the pages — sees a state that no longer
+    // matches the source.
+    build();
   }
 });
 

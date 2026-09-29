@@ -1,4 +1,5 @@
 ---
+import Giscus from '@/components/Giscus.astro';
 import TagList from '@/components/TagList.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import type { BlogEntry } from '@/lib/entries';
@@ -13,7 +14,6 @@ type Props = { post: BlogEntry; minutes: number };
 const { post, minutes } = Astro.props;
 const { data } = post;
 const status = postStatus(data);
-// Giscus mounts here in Task 14; the component does not exist yet.
 ---
 <BaseLayout
   title={data.title}
@@ -72,4 +72,6 @@ const status = postStatus(data);
       )
     }
   </article>
+
+  <Giscus />
 </BaseLayout>

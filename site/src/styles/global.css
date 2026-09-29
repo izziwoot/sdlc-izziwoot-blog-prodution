@@ -240,6 +240,23 @@ figcaption {
   background: var(--code-bg);
 }
 
+.comments {
+  margin-block-start: calc(var(--space) * 2);
+  border-block-start: 1px solid var(--border);
+  padding-block-start: var(--space);
+}
+
+/* Reserve height for the lazily-loaded Giscus iframe: CLS budget is 0.02. */
+.comments .giscus,
+.comments .giscus-frame {
+  min-height: 20rem;
+}
+
+.comments iframe {
+  width: 100%;
+  border: 0;
+}
+
 .corrections {
   margin-block-start: calc(var(--space) * 2);
   border-block-start: 1px solid var(--border);

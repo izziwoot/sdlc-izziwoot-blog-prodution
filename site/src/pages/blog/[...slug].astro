@@ -1,0 +1,20 @@
+---
+import { render } from 'astro:content';
+import PostLayout from '@/layouts/PostLayout.astro';
+import { getPublishedPosts } from '@/lib/entries';
+import type { GetStaticPaths } from 'astro';
+
+// getPublishedPosts, not getListablePosts: a retracted post keeps its URL
+// (INV-5) while disappearing from every listing.
+export const getStaticPaths: GetStaticPaths = async () => {
+  const posts = await getPublishedPosts();
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+};
+
+const { post } = Astro.props;
+const { Content, remarkPluginFrontmatter } = await render(post);
+const minutes = remarkPluginFrontmatter.readingTime?.minutes ?? 1;
+---
+<PostLayout post={post} minutes={minutes}>
+  <Content />
+</PostLayout>

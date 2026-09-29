@@ -1,0 +1,45 @@
+---
+import { render } from 'astro:content';
+import PostCard from '@/components/PostCard.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getListablePosts } from '@/lib/entries';
+import { groupByTag } from '@/lib/posts';
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+
+// Only tags with at least one published post generate a page (spec FR-16). An
+// empty tag page would return 200 with nothing on it.
+export const getStaticPaths = (async () => {
+  const grouped = groupByTag(await getListablePosts());
+  return [...grouped.entries()].map(([tag, posts]) => ({ params: { tag }, props: { tag, posts } }));
+}) satisfies GetStaticPaths;
+
+// Annotating getStaticPaths does not type Astro.props; this is what does.
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { tag, posts } = Astro.props;
+
+const listing = await Promise.all(
+  posts.map(async (post) => {
+    const { remarkPluginFrontmatter } = await render(post);
+    return { post, minutes: remarkPluginFrontmatter.readingTime?.minutes ?? 1 };
+  }),
+);
+---
+<BaseLayout
+  title={`Posts tagged ${tag}`}
+  description={`Every published post on this blog tagged ${tag}, listed newest first, covering the practical side of the topic rather than the theory behind it.`}
+  path={`/blog/tags/${tag}/`}
+>
+  <h1>Posts tagged “{tag}”</h1>
+  <p class="post-meta"><a href="/blog/tags/">All topics</a></p>
+  {
+    listing.map(({ post, minutes }) => (
+      <PostCard
+        slug={post.id}
+        title={post.data.title}
+        pubDate={post.data.pubDate}
+        minutes={minutes}
+        tags={post.data.tags}
+      />
+    ))
+  }
+</BaseLayout>

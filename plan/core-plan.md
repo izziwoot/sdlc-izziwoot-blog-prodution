@@ -103,6 +103,36 @@ Consequence for Task 15's tests: `checkCsp` must reject `'unsafe-inline'` in
 blanket rejection the plan currently specifies makes the correct policy
 unrepresentable, so that assertion needs rewriting when Task 15 is implemented.
 
+### ⚠️ `getStaticPaths` must use `satisfies`, not a type annotation
+
+Found at Task 9 when `astro check` reported four errors in a route that built
+and rendered correctly.
+
+Annotating `export const getStaticPaths: GetStaticPaths = async () => {...}`
+**widens the return type and erases the concrete `props` shape**, so
+`InferGetStaticPropsType<typeof getStaticPaths>` resolves to `never` and every
+destructured prop becomes an implicit `any`. Annotate or infer — not both.
+
+The working form, applied in Tasks 8 and 9 and required for every future dynamic
+route:
+
+```ts
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+
+export const getStaticPaths = (async () => {
+  // ...
+}) satisfies GetStaticPaths;
+
+// Declaring a local `Props` type is what types Astro.props.
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { post } = Astro.props;
+```
+
+Worth noting the failure mode: the page built, rendered and passed all 30
+build-output assertions while its props were untyped. Only the blocking
+`astro check` gate caught it, which is the argument for keeping that gate
+blocking rather than advisory.
+
 ### Blocked-by-decision gate
 
 **Task 22 must not start** until §10.1 and §10.2 of the spec are resolved by a human and the `policies/` reviewer text is amended to match. Tasks 1–21 and 23 are unblocked and depend on nothing from that decision. Do not guess a branch-protection configuration.
@@ -2319,7 +2349,7 @@ import { render } from 'astro:content';
 import { getPublishedPosts } from '@/lib/entries';
 import type { GetStaticPaths } from 'astro';
 
-export const getStaticPaths: GetStaticPaths = async () => {
+export const getStaticPaths = (async () => {
   const posts = await getPublishedPosts();
   return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
 };
@@ -2470,7 +2500,7 @@ import { getListablePosts } from '@/lib/entries';
 import { groupByTag } from '@/lib/posts';
 import type { GetStaticPaths } from 'astro';
 
-export const getStaticPaths: GetStaticPaths = async () => {
+export const getStaticPaths = (async () => {
   const grouped = groupByTag(await getListablePosts());
   // Only tags with at least one published post generate a page (spec FR-16).
   return [...grouped.entries()].map(([tag, posts]) => ({ params: { tag }, props: { tag, posts } }));

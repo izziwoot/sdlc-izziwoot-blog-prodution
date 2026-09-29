@@ -1,0 +1,29 @@
+/*
+ * Minimal baseline so BaseLayout has something to import. Task 6 replaces this
+ * with the full token system, type scale, and self-hosted fonts.
+ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  line-height: 1.65;
+}
+
+.skip-link {
+  position: absolute;
+  inset-inline-start: -100vw;
+  padding: 0.5rem 1rem;
+}
+
+.skip-link:focus {
+  inset-inline-start: 0;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}

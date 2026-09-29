@@ -1,15 +1,13 @@
 import { parseEnv } from './env';
 
 /**
- * Vite only surfaces PUBLIC_-prefixed variables on `import.meta.env`, and
- * SITE_URL is deliberately unprefixed (it is build-time only, not client data).
- * Reading both sources keeps this correct whichever way the value arrives.
- * This file runs at build time only — the output is static.
+ * Astro surfaces unprefixed build-time variables on `import.meta.env`, verified
+ * against a real build: SITE_URL resolves here without a process.env fallback.
+ * Only PUBLIC_-prefixed values are additionally exposed to the client, which is
+ * why the giscus and analytics identifiers carry that prefix and SITE_URL does
+ * not. This module runs at build time only — the output is static.
  */
-const raw = {
-  ...(typeof process !== 'undefined' ? process.env : {}),
-  ...import.meta.env,
-} as Record<string, string | undefined>;
+const raw = import.meta.env as unknown as Record<string, string | undefined>;
 
 const env = parseEnv(raw);
 

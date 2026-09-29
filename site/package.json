@@ -14,7 +14,9 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@astrojs/markdown-remark": "^7.3.1",
     "astro": "^7.3.5",
+    "remark-reading-time": "^2.1.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {

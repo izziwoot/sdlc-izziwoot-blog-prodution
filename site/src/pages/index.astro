@@ -1,0 +1,45 @@
+---
+import { render } from 'astro:content';
+import PostCard from '@/components/PostCard.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { site } from '@/config/site';
+import { getAllPosts, getListablePosts } from '@/lib/entries';
+import { warnAboutFutureDated, warnAboutVolume } from '@/lib/warnings';
+
+const posts = await getListablePosts();
+warnAboutFutureDated(await getAllPosts(), new Date());
+warnAboutVolume(posts.length);
+
+// `render` is a standalone export in Astro 7; entries have no .render() method.
+const listing = await Promise.all(
+  posts.map(async (post) => {
+    const { remarkPluginFrontmatter } = await render(post);
+    return { post, minutes: remarkPluginFrontmatter.readingTime?.minutes ?? 1 };
+  }),
+);
+---
+<BaseLayout
+  title={site.name}
+  description={`${site.tagline} Essays on software architecture, AI systems, and the practice of building things that have to keep working.`}
+  path="/"
+>
+  <h1>{site.name}</h1>
+  <p>{site.tagline}</p>
+
+  {
+    listing.length === 0 ? (
+      <p>No posts published yet.</p>
+    ) : (
+      listing.map(({ post, minutes }) => (
+        <PostCard
+          slug={post.id}
+          title={post.data.title}
+          pubDate={post.data.pubDate}
+          minutes={minutes}
+          tags={post.data.tags}
+          draft={post.data.draft}
+        />
+      ))
+    )
+  }
+</BaseLayout>

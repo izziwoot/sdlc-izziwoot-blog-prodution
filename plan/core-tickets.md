@@ -60,7 +60,7 @@ criteria. Values copied verbatim from the spec.
 | BLOG-3 | Post selection, ordering, and tag grouping | 2 | M | `content` `foundation` |
 | BLOG-4 | Slug convention and route-collision guard | 2 | S | `ci` `content` |
 | BLOG-5 | Site config, SEO tags, base layout | 1, 3 | L | `seo` `foundation` |
-| BLOG-6 | Original design system with verified contrast | 1 | L | `design` `a11y` |
+| BLOG-6 | Original design system with verified contrast | 1, 5 | L | `design` `a11y` |
 | BLOG-7 | Index route and post listing | 3, 5, 6 | M | `routes` |
 | BLOG-8 | Post route, corrections, retraction | 5, 6, 7 | L | `routes` `editorial` |
 | BLOG-9 | Tag index and per-tag routes | 3, 7 | S | `routes` |

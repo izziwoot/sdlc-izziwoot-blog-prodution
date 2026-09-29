@@ -1,0 +1,16 @@
+---
+type Props = { tags: readonly string[]; as?: 'ul' | 'span' };
+const { tags, as = 'span' } = Astro.props;
+const Wrapper = as;
+---
+<Wrapper class="tag-list">
+  {
+    tags.map((tag) =>
+      as === 'ul' ? (
+        <li><a href={`/blog/tags/${tag}/`}>{tag}</a></li>
+      ) : (
+        <a href={`/blog/tags/${tag}/`}>{tag}</a>
+      ),
+    )
+  }
+</Wrapper>

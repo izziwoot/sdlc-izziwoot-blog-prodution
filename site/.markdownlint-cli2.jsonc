@@ -1,0 +1,14 @@
+{
+  "globs": ["src/content/**/*.md", "src/content/**/*.mdx", "docs/**/*.md"],
+  "config": {
+    "default": true,
+    // Line length is the author's business, not a linter's.
+    "MD013": false,
+    // Inline HTML is required: diagrams are hand-authored SVG.
+    "MD033": false,
+    // Front matter legitimately precedes the h1.
+    "MD041": false,
+    "MD024": { "siblings_only": true },
+    "MD046": { "style": "fenced" },
+  },
+}

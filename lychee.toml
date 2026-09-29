@@ -1,0 +1,13 @@
+# Internal-only, offline. Fails the build on a broken internal link or a broken
+# heading anchor.
+#
+# Nothing external is checked here, deliberately (spec §10.7): a blocking
+# external check fails your pipeline because SOMEONE ELSE'S server had a bad
+# minute, rate-limited CI, or started 403-ing unfamiliar user agents. External
+# links are checked weekly and reported instead.
+offline = true
+# Enum, not a boolean: "full" checks anchor and text fragments, so a renamed
+# heading breaks the build instead of silently rotting every deep link to it.
+include_fragments = "full"
+no_progress = true
+exclude = ['^https?://', '^mailto:']

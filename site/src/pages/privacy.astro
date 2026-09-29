@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
 ---
+
 <BaseLayout
   title="Privacy"
   description="What this site stores about you, which third parties process your requests, and why there is no cookie banner: this site sets no cookies at all."
@@ -8,39 +9,39 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 >
   <h1>Privacy</h1>
 
-  <p><strong>This site sets no cookies and stores no personal data about you.</strong></p>
+  <p>
+    <strong>This site sets no cookies and stores no personal data about you.</strong>
+  </p>
 
   <h2>What happens when you load a page</h2>
   <p>
-    The site is a set of static files. There is no login, no form, no database, and no
-    server-side code. Nothing you do here is recorded by me.
+    The site is a set of static files. There is no login, no form, no database, and no server-side
+    code. Nothing you do here is recorded by me.
   </p>
   <p>
-    Two third parties see your request, and both process your IP address in order to do
-    their job:
+    Two third parties see your request, and both process your IP address in order to do their job:
   </p>
   <ul>
     <li>
-      <strong>Cloudflare</strong> serves the pages and provides aggregate, cookieless
-      traffic analytics. I see page counts and referrers; I cannot identify you.
+      <strong>Cloudflare</strong> serves the pages and provides aggregate, cookieless traffic
+      analytics. I see page counts and referrers; I cannot identify you.
     </li>
     <li>
-      <strong>GitHub</strong> hosts the comment threads, which load on post pages via
-      Giscus. Loading a thread discloses your IP address to GitHub. Posting a comment
-      requires a GitHub account, and the comment lives in GitHub Discussions under
-      GitHub's terms rather than mine.
+      <strong>GitHub</strong> hosts the comment threads, which load on post pages via Giscus.
+      Loading a thread discloses your IP address to GitHub. Posting a comment requires a GitHub
+      account, and the comment lives in GitHub Discussions under GitHub's terms rather than mine.
     </li>
   </ul>
 
   <h2>Why there is no cookie banner</h2>
   <p>
-    Because there are no cookies to consent to. The analytics are cookieless and no
-    identifier is stored in your browser.
+    Because there are no cookies to consent to. The analytics are cookieless and no identifier is
+    stored in your browser.
   </p>
 
   <h2>Following without being counted</h2>
   <p>
-    The <a href="/feed.xml">RSS feed</a> needs no email address and no account. There is
-    no mailing list.
+    The <a href="/feed.xml">RSS feed</a> needs no email address and no account. There is no mailing
+    list.
   </p>
 </BaseLayout>

@@ -1,0 +1,10 @@
+dist
+.astro
+node_modules
+public/fonts
+pnpm-lock.yaml
+.output-baseline.json
+
+# Markdown content is NOT formatted: reflowing an author's prose produces a noisy
+# diff on every save and fights the writing. markdownlint handles structure.
+src/content

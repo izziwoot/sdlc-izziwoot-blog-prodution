@@ -11,9 +11,12 @@ const seo = buildSeo({
   noindex: site.noindex,
 });
 ---
+
 <title>{seo.title}</title>
 <link rel="canonical" href={seo.canonical} />
-{seo.meta.map((tag) => <meta {...tag} />)}
+{seo.meta.map((tag) => (
+  <meta {...tag} />
+))}
 <link rel="alternate" type="application/rss+xml" title={site.name} href="/feed.xml" />
 {/* JSON-LD is data, not executable script, so script-src does not cover it. */}
 {seo.jsonLd && <script type="application/ld+json" set:html={JSON.stringify(seo.jsonLd)} />}

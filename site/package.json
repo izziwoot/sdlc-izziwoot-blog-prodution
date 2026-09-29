@@ -14,7 +14,13 @@
     "test": "vitest run",
     "lint:content": "node scripts/check-filenames.mjs",
     "verify:headers": "node scripts/assert-headers.mjs",
-    "verify:output": "node scripts/assert-no-governance-leak.mjs"
+    "verify:output": "node scripts/assert-no-governance-leak.mjs",
+    "lint:content": "node scripts/check-filenames.mjs",
+    "lint:md": "markdownlint-cli2",
+    "lint:links": "lychee --config ../lychee.toml --root-dir \"$PWD/dist\" dist",
+    "format:check": "prettier --check .",
+    "format": "prettier --write .",
+    "verify": "pnpm check && pnpm lint:content && pnpm lint:md && pnpm format:check && pnpm test && pnpm build && pnpm verify:headers && pnpm verify:output && pnpm lint:links"
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^7.3.1",
@@ -34,6 +40,9 @@
     "@fontsource-variable/source-serif-4": "^5.3.0",
     "@types/node": "^22",
     "fast-xml-parser": "^5.11.1",
+    "markdownlint-cli2": "^0.23.3",
+    "prettier": "^3.9.9",
+    "prettier-plugin-astro": "^1.1.0",
     "typescript": "^5",
     "vitest": "^3.2.7"
   }

@@ -23,10 +23,7 @@ export function warnAboutFutureDated(
   );
 }
 
-export function warnAboutVolume(
-  count: number,
-  log: (msg: string) => void = console.warn,
-): void {
+export function warnAboutVolume(count: number, log: (msg: string) => void = console.warn): void {
   if (count < POST_LIMIT_WARNING) return;
   log(
     `[content] ${count} published posts on a single unpaginated index — ` +

@@ -26,7 +26,9 @@ describe('selectPublished', () => {
 
   it('excludes drafts in production mode', () => {
     const posts = [post({ id: 'a' }), post({ id: 'b', draft: true })];
-    expect(selectPublished(posts, { now: NOW, includeDrafts: false }).map((p) => p.id)).toEqual(['a']);
+    expect(selectPublished(posts, { now: NOW, includeDrafts: false }).map((p) => p.id)).toEqual([
+      'a',
+    ]);
   });
 
   it('includes drafts when includeDrafts is set, for dev and preview builds', () => {
@@ -88,7 +90,9 @@ describe('selectListable', () => {
       post({ id: 'ok' }),
       post({ id: 'gone', retracted: { date: NOW, reason: 'x'.repeat(20) } }),
     ];
-    expect(selectListable(posts, { now: NOW, includeDrafts: false }).map((p) => p.id)).toEqual(['ok']);
+    expect(selectListable(posts, { now: NOW, includeDrafts: false }).map((p) => p.id)).toEqual([
+      'ok',
+    ]);
     expect(selectPublished(posts, { now: NOW, includeDrafts: false })).toHaveLength(2);
   });
 });

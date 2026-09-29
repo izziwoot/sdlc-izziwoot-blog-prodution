@@ -1,0 +1,22 @@
+#!/usr/bin/env sh
+# Staged-only secret scan. Fast enough to run on every commit.
+#
+# This is the fast local gate; CI is the blocking one. It warns rather than fails
+# when gitleaks is absent, so a fresh clone is never bricked by a missing tool.
+
+if command -v gitleaks >/dev/null 2>&1; then
+  if ! gitleaks protect --staged --redact --config .gitleaks.toml; then
+    echo ""
+    echo "A potential secret is staged."
+    echo ""
+    echo "Do NOT commit and then revert. This repository is public and git history"
+    echo "is permanent, so a revert hides the value without removing it."
+    echo ""
+    echo "  1. Remove it from the staged change."
+    echo "  2. If it is a real credential, ROTATE it. Rotation is the remediation."
+    echo "  3. Record the incident under audits/."
+    exit 1
+  fi
+else
+  echo "warning: gitleaks not installed — staged secret scan skipped (CI still blocks)"
+fi

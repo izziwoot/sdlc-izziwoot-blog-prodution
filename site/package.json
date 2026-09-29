@@ -22,7 +22,8 @@
     "format": "prettier --write .",
     "verify": "pnpm check && pnpm lint:content && pnpm lint:md && pnpm format:check && pnpm test && pnpm build && pnpm verify:headers && pnpm verify:output && pnpm lint:links",
     "lint:lighthouse": "pnpm dlx @lhci/cli@0.15.1 autorun --config=./lighthouserc.json",
-    "assets:og": "node scripts/generate-og.mjs"
+    "assets:og": "node scripts/generate-og.mjs",
+    "prepare": "git -C .. config core.hooksPath .githooks || true"
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^7.3.1",

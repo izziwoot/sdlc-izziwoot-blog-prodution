@@ -1,0 +1,67 @@
+name: site
+
+# Path-filtered: a governance-only change must not deploy or rebuild the site.
+on:
+  push:
+    branches: [main]
+    paths: ['site/**', 'lychee.toml', '.github/workflows/site.yml']
+  pull_request:
+    paths: ['site/**', 'lychee.toml', '.github/workflows/site.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      SITE_URL: ${{ vars.SITE_URL || 'https://example.com' }}
+      PUBLIC_GISCUS_REPO: ${{ vars.PUBLIC_GISCUS_REPO || 'izziwoot/placeholder' }}
+      PUBLIC_GISCUS_REPO_ID: ${{ vars.PUBLIC_GISCUS_REPO_ID || 'R_placeholder' }}
+      PUBLIC_GISCUS_CATEGORY_ID: ${{ vars.PUBLIC_GISCUS_CATEGORY_ID || 'DIC_placeholder' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: site/pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+        working-directory: site
+
+      # Granular rather than a single `pnpm verify`, so a failure names its own
+      # step in the UI. The one difference from local: links use the lychee
+      # action below instead of a locally installed binary.
+      - run: pnpm check
+        working-directory: site
+      - run: pnpm lint:content
+        working-directory: site
+      - run: pnpm lint:md
+        working-directory: site
+      - run: pnpm format:check
+        working-directory: site
+      - run: pnpm test
+        working-directory: site
+      - run: pnpm build
+        working-directory: site
+      - run: pnpm verify:headers
+        working-directory: site
+      - run: pnpm verify:output
+        working-directory: site
+
+      - name: Internal link and anchor check
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          args: --config lychee.toml --root-dir ${{ github.workspace }}/site/dist site/dist
+          fail: true
+
+      - name: Lighthouse budgets
+        uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # 12.6.2
+        with:
+          configPath: ./site/lighthouserc.json

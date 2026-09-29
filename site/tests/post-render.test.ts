@@ -15,6 +15,8 @@ const ENV = {
   PUBLIC_GISCUS_REPO: 'izziwoot/x',
   PUBLIC_GISCUS_REPO_ID: 'R_x',
   PUBLIC_GISCUS_CATEGORY_ID: 'DIC_x',
+  // Set so the third-party-origin assertion exercises both origins, not one.
+  PUBLIC_CF_BEACON_TOKEN: 'testbeacon',
 };
 
 const SLUG = 'version-pins-are-security-decisions';
@@ -305,6 +307,75 @@ describe('images and diagrams', () => {
     const svg = read(`blog/${SLUG}/index.html`).match(/<svg[\s\S]*?<\/svg>/)?.[0] ?? '';
     expect(svg).toMatch(/viewBox="/);
     expect(svg).not.toMatch(/<svg[^>]+\bwidth="/);
+  });
+});
+
+describe('comments', () => {
+  it('embeds giscus on a post page with a strict path mapping', () => {
+    const html = read(`blog/${SLUG}/index.html`);
+    expect(html).toContain('https://giscus.app/client.js');
+    // pathname + strict: a near-miss path cannot attach to the wrong thread.
+    expect(html).toContain('data-mapping="pathname"');
+    expect(html).toContain('data-strict="1"');
+  });
+
+  it('loads the iframe lazily so it cannot affect LCP', () => {
+    expect(read(`blog/${SLUG}/index.html`)).toContain('data-loading="lazy"');
+  });
+
+  it('follows the OS colour scheme without any theme-sync script of our own', () => {
+    expect(read(`blog/${SLUG}/index.html`)).toContain('data-theme="preferred_color_scheme"');
+  });
+
+  it('collects no data it does not use', () => {
+    const html = read(`blog/${SLUG}/index.html`);
+    expect(html).toContain('data-reactions-enabled="0"');
+    expect(html).toContain('data-emit-metadata="0"');
+  });
+
+  it('tells readers without a GitHub account how to reach the author instead', () => {
+    // The spec accepts that exclusion; the page should say so out loud.
+    expect(read(`blog/${SLUG}/index.html`)).toMatch(/need a GitHub account/i);
+  });
+
+  it.each([
+    'index.html',
+    'blog/tags/index.html',
+    'blog/tags/security/index.html',
+    'about/index.html',
+    'privacy/index.html',
+    '404.html',
+  ])('omits giscus from %s, so only post pages load a third party', (page) => {
+    expect(read(page)).not.toContain('giscus.app');
+  });
+
+  it('loads exactly two third-party origins on a post page and no more', () => {
+    const html = read(`blog/${SLUG}/index.html`);
+    // Only tags that actually fetch something. An <a href> is navigation, not a
+    // request, and a canonical/og URL is metadata — neither loads a resource.
+    const resources = [
+      ...html.matchAll(/<script[^>]+src="([^"]+)"/g),
+      ...html.matchAll(/<link[^>]+rel="(?:stylesheet|preload)"[^>]*href="([^"]+)"/g),
+      ...html.matchAll(/<link[^>]+href="([^"]+)"[^>]*rel="(?:stylesheet|preload)"/g),
+      ...html.matchAll(/<img[^>]+src="([^"]+)"/g),
+      ...html.matchAll(/<iframe[^>]+src="([^"]+)"/g),
+    ].map((m) => m[1]!);
+
+    const origins = [...new Set(
+      resources.filter((u) => /^https?:\/\//.test(u)).map((u) => new URL(u).origin),
+    )].sort();
+
+    expect(origins).toEqual(['https://giscus.app', 'https://static.cloudflareinsights.com']);
+  });
+
+  it('keeps every other page down to at most the analytics beacon', () => {
+    for (const page of ['index.html', 'about/index.html']) {
+      const html = read(page);
+      const scripts = [...html.matchAll(/<script[^>]+src="(https?:\/\/[^"]+)"/g)].map(
+        (m) => new URL(m[1]!).origin,
+      );
+      expect([...new Set(scripts)]).toEqual(['https://static.cloudflareinsights.com']);
+    }
   });
 });
 

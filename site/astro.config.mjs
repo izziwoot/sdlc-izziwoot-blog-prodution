@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { defineConfig } from 'astro/config';
+import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeExternalLinks from 'rehype-external-links';
@@ -49,6 +50,7 @@ export default defineConfig({
   // style-src 'self' CSP added in Task 15.
   build: { inlineStylesheets: 'never' },
   integrations: [
+    mdx(),
     sitemap({
       filter: (page) =>
         !page.includes('/404') && !EXCLUDED.some((slug) => page.includes(`/blog/${slug}/`)),

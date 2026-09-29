@@ -173,12 +173,74 @@ describe('feed output', () => {
   });
 });
 
+describe('static pages', () => {
+  it.each([
+    ['about/index.html', 'About'],
+    ['privacy/index.html', 'Privacy'],
+    ['404.html', 'Page not found'],
+  ])('emits %s', (page, heading) => {
+    expect(exists(page)).toBe(true);
+    expect(read(page)).toContain(heading);
+  });
+
+  it('states the AI-assistance commitment in its load-bearing form', () => {
+    const html = read('about/index.html');
+    expect(html).toMatch(/executed before it is published/);
+    expect(html).toMatch(/primary source/);
+  });
+
+  it('does NOT claim a publishing cadence that has not been decided (FR-21)', () => {
+    // Open Question 5 is unanswered; an implementer must not invent a promise.
+    expect(read('about/index.html')).not.toMatch(/every month|monthly|weekly|each week/i);
+  });
+
+  it('documents the corrections and retraction policy', () => {
+    const html = read('about/index.html');
+    expect(html).toMatch(/not silently rewritten/);
+    expect(html).toMatch(/keep their URL/);
+  });
+
+  it('names both processors and says IP addresses are processed', () => {
+    const html = read('privacy/index.html');
+    expect(html).toContain('Cloudflare');
+    expect(html).toContain('GitHub');
+    expect(html).toMatch(/IP address/);
+  });
+
+  it('does not overclaim that nothing at all is collected (spec §10.4)', () => {
+    // The honest claim is "no cookies, no personal data stored" — not "nothing
+    // collected", since our CDN and comment host both process IP addresses.
+    expect(read('privacy/index.html')).not.toMatch(/nothing (is )?collected/i);
+  });
+
+  it('explains why there is no cookie banner', () => {
+    expect(read('privacy/index.html')).toMatch(/no cookies to consent to/i);
+  });
+
+  it('renders icons as inline SVG with no icon-font request', () => {
+    const html = read('about/index.html');
+    expect(html).toContain('<svg');
+    expect(html).not.toMatch(/fontawesome|font-awesome|\bfa-/i);
+  });
+
+  it('marks decorative icons aria-hidden so they are not announced', () => {
+    expect(read('about/index.html')).toMatch(/<svg[^>]*aria-hidden="true"/);
+  });
+
+  it('keeps the 404 page free of a noindex-defeating canonical to a real page', () => {
+    expect(read('404.html')).toContain('Page not found');
+  });
+});
+
 describe('invariants that must hold on every page', () => {
   const pages = [
     'index.html',
     `blog/${SLUG}/index.html`,
     'blog/tags/index.html',
     'blog/tags/security/index.html',
+    'about/index.html',
+    'privacy/index.html',
+    '404.html',
   ];
 
   it.each(pages)('%s ships no first-party JavaScript (INV-4)', (page) => {

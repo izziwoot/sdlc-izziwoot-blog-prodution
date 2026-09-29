@@ -13,7 +13,8 @@
     "check": "astro check",
     "test": "vitest run",
     "lint:content": "node scripts/check-filenames.mjs",
-    "verify:headers": "node scripts/assert-headers.mjs"
+    "verify:headers": "node scripts/assert-headers.mjs",
+    "verify:output": "node scripts/assert-no-governance-leak.mjs"
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^7.3.1",

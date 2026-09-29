@@ -1,0 +1,8 @@
+# Canonical shapes. 301 = permanent and cacheable.
+# /blog redirects to / because in v1 the index IS the blog. If a distinct /blog/
+# listing is ever introduced, this line is removed rather than repointed.
+/blog            /                 301
+/blog/           /                 301
+/tags/*          /blog/tags/:splat 301
+/feed            /feed.xml         301
+/rss.xml         /feed.xml         301

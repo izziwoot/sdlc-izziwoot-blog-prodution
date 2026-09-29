@@ -232,6 +232,46 @@ describe('static pages', () => {
   });
 });
 
+describe('discovery', () => {
+  it('emits a sitemap index and a sitemap', () => {
+    expect(exists('sitemap-index.xml')).toBe(true);
+    expect(exists('sitemap-0.xml')).toBe(true);
+  });
+
+  it('lists every real page in the sitemap', () => {
+    const xml = read('sitemap-0.xml');
+    for (const loc of [
+      'https://example.com/',
+      `https://example.com/blog/${SLUG}/`,
+      'https://example.com/blog/tags/',
+      'https://example.com/blog/tags/security/',
+      'https://example.com/about/',
+      'https://example.com/privacy/',
+    ]) {
+      expect(xml).toContain(`<loc>${loc}</loc>`);
+    }
+  });
+
+  it('excludes the 404 page from the sitemap', () => {
+    expect(read('sitemap-0.xml')).not.toContain('/404');
+  });
+
+  it('generates robots.txt from the validated SITE_URL, not a placeholder', () => {
+    const txt = read('robots.txt');
+    expect(txt).toMatch(/^User-agent: \*/m);
+    expect(txt).toMatch(/^Allow: \/$/m);
+    expect(txt).toContain('Sitemap: https://example.com/sitemap-index.xml');
+    expect(txt).not.toMatch(/REPLACE|TODO|example\.test/i);
+  });
+
+  it('ships _redirects with the canonical 301s', () => {
+    const txt = read('_redirects');
+    for (const line of [/^\/blog\s+\/\s+301/m, /^\/tags\/\*\s+\/blog\/tags\/:splat\s+301/m, /^\/feed\s+\/feed\.xml\s+301/m, /^\/rss\.xml\s+\/feed\.xml\s+301/m]) {
+      expect(txt).toMatch(line);
+    }
+  });
+});
+
 describe('invariants that must hold on every page', () => {
   const pages = [
     'index.html',

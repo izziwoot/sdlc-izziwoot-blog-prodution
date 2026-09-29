@@ -1,0 +1,32 @@
+---
+import { Picture } from 'astro:assets';
+
+type Props = {
+  src: ImageMetadata;
+  /** Required. Pass alt="" deliberately for a decorative image. */
+  alt: string;
+  caption?: string;
+  loading?: 'lazy' | 'eager';
+};
+
+const { src, alt, caption, loading = 'lazy' } = Astro.props;
+
+// An empty alt is legitimate for decoration, but it must be a choice made at the
+// call site rather than an omission that silently ships an inaccessible image.
+if (alt === undefined) {
+  throw new Error('Figure: alt is required (pass alt="" for decorative images)');
+}
+---
+<figure>
+  <!-- Picture, not Image: `formats` (plural) with a fallback is Picture's API. -->
+  <Picture
+    src={src}
+    alt={alt}
+    loading={loading}
+    decoding="async"
+    formats={['avif', 'webp']}
+    widths={[400, 800, 1200]}
+    sizes="(max-width: 40rem) 100vw, 34rem"
+  />
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>

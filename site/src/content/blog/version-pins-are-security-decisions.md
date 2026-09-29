@@ -19,6 +19,36 @@ interesting was the patched-version field: the fix existed only on a later major
 line. There was no patch release for the version I had pinned, and there never
 would be. The range I had written could not reach safety.
 
+<svg viewBox="0 0 440 150" role="img" aria-labelledby="pin-title pin-desc" class="diagram">
+  <title id="pin-title">A fix that lands only on a later major line</title>
+  <desc id="pin-desc">
+    Two horizontal release lines. The upper line, major version five, runs from an
+    early release to the current one with no fix marker on it. The lower line, major
+    version seven, carries a marker labelled "fix" partway along. A bracket on the
+    left shows a pin covering only the upper line, so the fix on the lower line is
+    out of reach.
+  </desc>
+
+  <line x1="120" y1="45" x2="415" y2="45" stroke="var(--border)" stroke-width="2" />
+  <line x1="120" y1="110" x2="415" y2="110" stroke="var(--border)" stroke-width="2" />
+
+  <circle cx="160" cy="45" r="5" fill="var(--fg-muted)" />
+  <circle cx="240" cy="45" r="5" fill="var(--fg-muted)" />
+  <circle cx="320" cy="45" r="5" fill="var(--fg-muted)" />
+
+  <circle cx="200" cy="110" r="5" fill="var(--fg-muted)" />
+  <circle cx="300" cy="110" r="7" fill="var(--accent)" />
+  <circle cx="380" cy="110" r="5" fill="var(--fg-muted)" />
+
+  <text x="300" y="136" text-anchor="middle" fill="var(--accent)" font-size="13">fix</text>
+
+  <text x="108" y="50" text-anchor="end" fill="var(--fg)" font-size="14">5.x</text>
+  <text x="108" y="115" text-anchor="end" fill="var(--fg)" font-size="14">7.x</text>
+
+  <path d="M40 28 h14 v34 h-14" fill="none" stroke="var(--fg)" stroke-width="2" />
+  <text x="30" y="50" text-anchor="end" fill="var(--fg)" font-size="13">pin</text>
+</svg>
+
 That reframes what a pin is. `^5` reads like a compatibility statement, and it is
 one — but it is also a commitment about which security fixes you are able to
 receive. When the fix lands in 7, a project pinned to 5 has quietly opted out.

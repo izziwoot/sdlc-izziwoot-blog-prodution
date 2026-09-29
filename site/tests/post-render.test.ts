@@ -272,6 +272,42 @@ describe('discovery', () => {
   });
 });
 
+describe('images and diagrams', () => {
+  it('never emits an image without an alt attribute', () => {
+    for (const page of ['index.html', `blog/${SLUG}/index.html`, 'about/index.html']) {
+      for (const img of read(page).match(/<img\b[^>]*>/g) ?? []) {
+        expect(img).toMatch(/\balt="/);
+      }
+    }
+  });
+
+  it('never bypasses the image pipeline with a raw img to public/', () => {
+    const raw = [...read(`blog/${SLUG}/index.html`).matchAll(/<img[^>]+src="\/(?!_astro)([^"]+)"/g)];
+    expect(raw).toEqual([]);
+  });
+
+  it('renders the diagram as inline SVG with an accessible name and description', () => {
+    const html = read(`blog/${SLUG}/index.html`);
+    expect(html).toMatch(/<svg[^>]+role="img"[^>]*>/);
+    expect(html).toMatch(/aria-labelledby="pin-title pin-desc"/);
+    expect(html).toMatch(/<title id="pin-title">/);
+    expect(html).toMatch(/<desc id="pin-desc">/);
+  });
+
+  it('draws the diagram with tokens, so it follows both colour schemes', () => {
+    const svg = read(`blog/${SLUG}/index.html`).match(/<svg[\s\S]*?<\/svg>/)?.[0] ?? '';
+    expect(svg).toMatch(/var\(--/);
+    // A hard-coded black or white is invisible in one scheme and nothing warns you.
+    expect(svg).not.toMatch(/(?:stroke|fill)="#(?:000|fff|000000|ffffff)"/i);
+  });
+
+  it('scales the diagram without layout shift', () => {
+    const svg = read(`blog/${SLUG}/index.html`).match(/<svg[\s\S]*?<\/svg>/)?.[0] ?? '';
+    expect(svg).toMatch(/viewBox="/);
+    expect(svg).not.toMatch(/<svg[^>]+\bwidth="/);
+  });
+});
+
 describe('invariants that must hold on every page', () => {
   const pages = [
     'index.html',

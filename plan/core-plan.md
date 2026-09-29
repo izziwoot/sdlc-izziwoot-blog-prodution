@@ -40,6 +40,40 @@ Every task's requirements implicitly include all of these. Values are copied ver
   Task commit steps below show the subject line only; append this line to every one.
 - **Commit after every task.** Never batch two tasks into one commit.
 
+### Dependency versions are security-constrained, not stylistic
+
+Verified by running `pnpm audit --audit-level=high` during Task 1 on 2026-09-28:
+**Astro `^5` and Vitest `^2` cannot satisfy the spec's own blocking audit gate**
+(spec §5.3). Two criticals are patched only on later majors — `astro` in **7.2.8**
+and `vitest` in **3.2.6** — so there is no fix available on the 5.x or 2.x lines.
+`sharp` (pulled by Astro) and `vite` (pulled by Vitest) clear as a side effect.
+
+Measured: 20 vulnerabilities (2 critical, 5 high) on the original pins → 2
+moderate, audit exit 0, on `astro@7.3.5` + `vitest@3.2.7`. Do **not** pin an
+explicit top-level `vite`: Vitest 3.2.7 declares `vite` peer
+`^5.0.0 || ^6.0.0 || ^7.0.0-0`, so it cannot use Astro 7's vite 8. Two vite
+copies in the tree is correct and expected here, and the copy Vitest uses is
+already past the `>=6.4.3` fix.
+
+### ⚠️ Tasks 2, 3, 7, 8, 9, 10, 12 need revision for Astro 7's content API
+
+The content-collection code in those tasks was written against an older Astro
+API. Confirmed against the installed `astro@7.3.5`:
+
+- **`await post.render()` does not exist.** Rendering is a standalone export
+  (`createRenderEntry` internally; `render(entry)` from `astro:content`). Tasks
+  7, 8, and 9 all call `post.render()` and must be rewritten.
+- `astro/loaders` exports `glob` and `file` — the content-layer loader API is
+  what Astro 7 expects for a `blog` collection sourced from Markdown files.
+- `defineCollection` still *types* `type?: 'content'` next to `'content_layer'`.
+
+**Settle these at Task 2 against the installed version, do not guess:** whether
+`type: 'content'` still functions at runtime or only survives as a deprecated
+type, and whether entries expose `slug` or only `id` — the plan uses
+`post.slug` throughout, and if Astro 7 dropped it, every route and the feed's
+URL construction change. Read the generated `.astro/types.d.ts` after a
+`pnpm check`; it is authoritative for the installed version.
+
 ### Blocked-by-decision gate
 
 **Task 22 must not start** until §10.1 and §10.2 of the spec are resolved by a human and the `policies/` reviewer text is amended to match. Tasks 1–21 and 23 are unblocked and depend on nothing from that decision. Do not guess a branch-protection configuration.
@@ -150,8 +184,8 @@ echo "22.23.3" > .nvmrc   # 22.x, NOT 20.x: see note below
 mkdir -p site/src/{config,content,lib,components,layouts,pages,styles,assets} site/public site/scripts/lib site/tests
 cd site
 pnpm init
-pnpm add astro@^5 zod@^3
-pnpm add -D typescript vitest @types/node @astrojs/check
+pnpm add astro@^7 zod@^3
+pnpm add -D typescript vitest@^3 @types/node @astrojs/check
 pnpm pkg set packageManager="pnpm@$(pnpm --version)"
 pnpm pkg set engines.node=">=20.11 <23"
 pnpm pkg set type="module"

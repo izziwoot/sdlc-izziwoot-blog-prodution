@@ -1,6 +1,8 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
+import { readdirSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { TAGS } from '@/content/schema';
 
 /**
  * The only suite that shells out. Everything else in this project is a pure
@@ -81,8 +83,55 @@ describe('post route output', () => {
   });
 });
 
+describe('tag routes', () => {
+  /** Tags carried by the only published post. */
+  const USED = ['security', 'tooling'] as const;
+
+  it('emits the tag index', () => {
+    expect(exists('blog/tags/index.html')).toBe(true);
+  });
+
+  it.each(USED)('emits a page for %s, which has a published post', (tag) => {
+    expect(exists(`blog/tags/${tag}/index.html`)).toBe(true);
+  });
+
+  it('emits NO directory for a tag with zero published posts (FR-16)', () => {
+    const emitted = readdirSync(new URL('../dist/blog/tags/', import.meta.url), {
+      withFileTypes: true,
+    })
+      .filter((e) => e.isDirectory())
+      .map((e) => e.name);
+    const unused = TAGS.filter((t) => !USED.includes(t as (typeof USED)[number]));
+    expect(unused.length).toBeGreaterThan(0);
+    for (const tag of unused) expect(emitted).not.toContain(tag);
+  });
+
+  it('links each tag from the index to its own page', () => {
+    const html = read('blog/tags/index.html');
+    for (const tag of USED) expect(html).toContain(`href="/blog/tags/${tag}/"`);
+  });
+
+  it('lists the post on its tag page', () => {
+    expect(read(`blog/tags/security/index.html`)).toContain(`href="/blog/${SLUG}/"`);
+  });
+
+  it('agrees the singular for a one-post tag rather than saying "1 posts"', () => {
+    expect(read('blog/tags/index.html')).toMatch(/1 post\b/);
+    expect(read('blog/tags/index.html')).not.toMatch(/1 posts/);
+  });
+
+  it('offers a route back to all topics', () => {
+    expect(read('blog/tags/security/index.html')).toContain('href="/blog/tags/"');
+  });
+});
+
 describe('invariants that must hold on every page', () => {
-  const pages = ['index.html', `blog/${SLUG}/index.html`];
+  const pages = [
+    'index.html',
+    `blog/${SLUG}/index.html`,
+    'blog/tags/index.html',
+    'blog/tags/security/index.html',
+  ];
 
   it.each(pages)('%s ships no first-party JavaScript (INV-4)', (page) => {
     const srcs = [...read(page).matchAll(/<script[^>]*src="([^"]+)"/g)].map((m) => m[1]!);

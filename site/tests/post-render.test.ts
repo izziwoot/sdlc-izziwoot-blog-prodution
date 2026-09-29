@@ -67,9 +67,9 @@ describe('post route output', () => {
 
   it('gives external links noopener noreferrer and does NOT hijack navigation with target=_blank', () => {
     const html = read(`blog/${SLUG}/index.html`);
-    const external = [...html.matchAll(/<a[^>]+href="https?:\/\/(?!example\.com)[^"]*"[^>]*>/g)].map(
-      (m) => m[0],
-    );
+    const external = [
+      ...html.matchAll(/<a[^>]+href="https?:\/\/(?!example\.com)[^"]*"[^>]*>/g),
+    ].map((m) => m[0]);
     expect(external.length).toBeGreaterThan(0);
     for (const anchor of external) {
       expect(anchor).toMatch(/rel="[^"]*noopener[^"]*"/);
@@ -140,9 +140,7 @@ describe('feed output', () => {
   it('uses absolute links and an identical absolute permalink guid', () => {
     const xml = read('feed.xml');
     expect(xml).toContain(`<link>https://example.com/blog/${SLUG}/</link>`);
-    expect(xml).toContain(
-      `<guid isPermaLink="true">https://example.com/blog/${SLUG}/</guid>`,
-    );
+    expect(xml).toContain(`<guid isPermaLink="true">https://example.com/blog/${SLUG}/</guid>`);
   });
 
   it('declares a language and an atom self link', () => {
@@ -268,7 +266,12 @@ describe('discovery', () => {
 
   it('ships _redirects with the canonical 301s', () => {
     const txt = read('_redirects');
-    for (const line of [/^\/blog\s+\/\s+301/m, /^\/tags\/\*\s+\/blog\/tags\/:splat\s+301/m, /^\/feed\s+\/feed\.xml\s+301/m, /^\/rss\.xml\s+\/feed\.xml\s+301/m]) {
+    for (const line of [
+      /^\/blog\s+\/\s+301/m,
+      /^\/tags\/\*\s+\/blog\/tags\/:splat\s+301/m,
+      /^\/feed\s+\/feed\.xml\s+301/m,
+      /^\/rss\.xml\s+\/feed\.xml\s+301/m,
+    ]) {
       expect(txt).toMatch(line);
     }
   });
@@ -284,7 +287,9 @@ describe('images and diagrams', () => {
   });
 
   it('never bypasses the image pipeline with a raw img to public/', () => {
-    const raw = [...read(`blog/${SLUG}/index.html`).matchAll(/<img[^>]+src="\/(?!_astro)([^"]+)"/g)];
+    const raw = [
+      ...read(`blog/${SLUG}/index.html`).matchAll(/<img[^>]+src="\/(?!_astro)([^"]+)"/g),
+    ];
     expect(raw).toEqual([]);
   });
 
@@ -361,9 +366,9 @@ describe('comments', () => {
       ...html.matchAll(/<iframe[^>]+src="([^"]+)"/g),
     ].map((m) => m[1]!);
 
-    const origins = [...new Set(
-      resources.filter((u) => /^https?:\/\//.test(u)).map((u) => new URL(u).origin),
-    )].sort();
+    const origins = [
+      ...new Set(resources.filter((u) => /^https?:\/\//.test(u)).map((u) => new URL(u).origin)),
+    ].sort();
 
     expect(origins).toEqual(['https://giscus.app', 'https://static.cloudflareinsights.com']);
   });

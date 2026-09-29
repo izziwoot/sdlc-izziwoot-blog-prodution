@@ -18,6 +18,7 @@ const listing = await Promise.all(
   }),
 );
 ---
+
 <BaseLayout
   title={site.name}
   description={`${site.tagline} Essays on software architecture, AI systems, and the practice of building things that have to keep working.`}
@@ -26,20 +27,18 @@ const listing = await Promise.all(
   <h1>{site.name}</h1>
   <p>{site.tagline}</p>
 
-  {
-    listing.length === 0 ? (
-      <p>No posts published yet.</p>
-    ) : (
-      listing.map(({ post, minutes }) => (
-        <PostCard
-          slug={post.id}
-          title={post.data.title}
-          pubDate={post.data.pubDate}
-          minutes={minutes}
-          tags={post.data.tags}
-          draft={post.data.draft}
-        />
-      ))
-    )
-  }
+  {listing.length === 0 ? (
+    <p>No posts published yet.</p>
+  ) : (
+    listing.map(({ post, minutes }) => (
+      <PostCard
+        slug={post.id}
+        title={post.data.title}
+        pubDate={post.data.pubDate}
+        minutes={minutes}
+        tags={post.data.tags}
+        draft={post.data.draft}
+      />
+    ))
+  )}
 </BaseLayout>

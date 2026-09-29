@@ -27,7 +27,9 @@ describe('absoluteUrl', () => {
   });
 
   it('passes an already-absolute URL through unchanged', () => {
-    expect(absoluteUrl('https://other.test/x/', 'https://example.com')).toBe('https://other.test/x/');
+    expect(absoluteUrl('https://other.test/x/', 'https://example.com')).toBe(
+      'https://other.test/x/',
+    );
   });
 });
 

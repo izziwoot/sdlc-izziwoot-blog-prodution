@@ -7,9 +7,7 @@ const schema = z.object({
     .refine((u) => /^https?:\/\//.test(u), 'SITE_URL must be an absolute http(s) URL'),
   PUBLIC_GISCUS_REPO: z.string({ error: 'PUBLIC_GISCUS_REPO is required' }).min(3),
   PUBLIC_GISCUS_REPO_ID: z.string({ error: 'PUBLIC_GISCUS_REPO_ID is required' }).min(3),
-  PUBLIC_GISCUS_CATEGORY_ID: z
-    .string({ error: 'PUBLIC_GISCUS_CATEGORY_ID is required' })
-    .min(3),
+  PUBLIC_GISCUS_CATEGORY_ID: z.string({ error: 'PUBLIC_GISCUS_CATEGORY_ID is required' }).min(3),
   PUBLIC_CF_BEACON_TOKEN: z.string().min(1).optional(),
 });
 

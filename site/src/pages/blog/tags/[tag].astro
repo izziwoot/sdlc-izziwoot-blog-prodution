@@ -24,22 +24,23 @@ const listing = await Promise.all(
   }),
 );
 ---
+
 <BaseLayout
   title={`Posts tagged ${tag}`}
   description={`Every published post on this blog tagged ${tag}, listed newest first, covering the practical side of the topic rather than the theory behind it.`}
   path={`/blog/tags/${tag}/`}
 >
   <h1>Posts tagged “{tag}”</h1>
-  <p class="post-meta"><a href="/blog/tags/">All topics</a></p>
-  {
-    listing.map(({ post, minutes }) => (
-      <PostCard
-        slug={post.id}
-        title={post.data.title}
-        pubDate={post.data.pubDate}
-        minutes={minutes}
-        tags={post.data.tags}
-      />
-    ))
-  }
+  <p class="post-meta">
+    <a href="/blog/tags/">All topics</a>
+  </p>
+  {listing.map(({ post, minutes }) => (
+    <PostCard
+      slug={post.id}
+      title={post.data.title}
+      pubDate={post.data.pubDate}
+      minutes={minutes}
+      tags={post.data.tags}
+    />
+  ))}
 </BaseLayout>

@@ -9,6 +9,7 @@ if (!author) {
   throw new Error('Missing author record: src/content/authors/adilson-cesar.json');
 }
 ---
+
 <BaseLayout
   title="About"
   description="Who writes this blog, how the posts are produced, how factual claims and code samples are verified before publication, and how corrections are handled."
@@ -17,38 +18,44 @@ if (!author) {
   <h1>About</h1>
 
   <p>
-    {site.name} is written by {author.data.name}{author.data.title && `, ${author.data.title}`}.
-    Posts here are about software architecture, AI systems, and the day-to-day practice
-    of building and operating things that have to keep working.
+    {site.name} is written by {author.data.name}
+    {author.data.title && `, ${author.data.title}`}. Posts here are about software architecture, AI
+    systems, and the day-to-day practice of building and operating things that have to keep working.
   </p>
 
   <h2>How these posts are made</h2>
   <p>
-    Posts on this site may be written with AI assistance. What that does not change:
-    every code sample is executed before it is published, and every factual claim is
-    traced to a primary source. If something here is wrong, the error is mine.
+    Posts on this site may be written with AI assistance. What that does not change: every code
+    sample is executed before it is published, and every factual claim is traced to a primary
+    source. If something here is wrong, the error is mine.
   </p>
 
   <h2>Corrections</h2>
   <p>
-    Published posts are not silently rewritten. Typos and formatting get fixed without
-    ceremony, but any change to meaning, facts, code, or a recommendation is recorded
-    in a dated correction note at the foot of the post. Retracted posts keep their URL
-    and carry a notice explaining why — nothing here disappears quietly.
+    Published posts are not silently rewritten. Typos and formatting get fixed without ceremony, but
+    any change to meaning, facts, code, or a recommendation is recorded in a dated correction note
+    at the foot of the post. Retracted posts keep their URL and carry a notice explaining why —
+    nothing here disappears quietly.
   </p>
 
   <h2>Elsewhere</h2>
   <ul class="links">
-    {
-      author.data.links.map((link: { label: string; href: string; icon: 'github' | 'linkedin' | 'x' | 'rss' | 'email' }) => (
+    {author.data.links.map(
+      (link: {
+        label: string;
+        href: string;
+        icon: 'github' | 'linkedin' | 'x' | 'rss' | 'email';
+      }) => (
         <li>
           <a href={link.href} rel={link.icon === 'rss' ? undefined : 'me noopener noreferrer'}>
             <Icon name={link.icon} /> {link.label}
           </a>
         </li>
-      ))
-    }
+      ),
+    )}
   </ul>
 
-  <p><a href="/privacy/">What this site collects about you</a> — almost nothing.</p>
+  <p>
+    <a href="/privacy/">What this site collects about you</a> — almost nothing.
+  </p>
 </BaseLayout>

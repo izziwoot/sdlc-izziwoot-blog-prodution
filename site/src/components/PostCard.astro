@@ -14,6 +14,7 @@ type Props = {
 
 const { slug, title, pubDate, minutes, tags, draft = false } = Astro.props;
 ---
+
 <article class="post-card">
   <h2>
     <a href={`/blog/${slug}/`}>{title}</a>

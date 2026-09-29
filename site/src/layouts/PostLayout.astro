@@ -15,6 +15,7 @@ const { post, minutes } = Astro.props;
 const { data } = post;
 const status = postStatus(data);
 ---
+
 <BaseLayout
   title={data.title}
   description={data.description}
@@ -32,45 +33,42 @@ const status = postStatus(data);
       <span>{readingTimeLabel(minutes)}</span>
       <span aria-hidden="true">·</span>
       <TagList tags={data.tags} />
-      {
-        status.showUpdated && data.updatedDate && (
-          <span class="updated">
-            Updated <time datetime={isoDate(data.updatedDate)}>{formatDate(data.updatedDate)}</time>
-          </span>
-        )
-      }
+      {status.showUpdated && data.updatedDate && (
+        <span class="updated">
+          Updated <time datetime={isoDate(data.updatedDate)}>{formatDate(data.updatedDate)}</time>
+        </span>
+      )}
     </p>
 
-    {
-      status.retracted && data.retracted && (
-        <aside class="retraction" role="note" aria-label="Retraction notice">
-          <p>
-            <strong>
-              Retracted on <time datetime={isoDate(data.retracted.date)}>{formatDate(data.retracted.date)}</time>.
-            </strong>
-          </p>
-          <p>{data.retracted.reason}</p>
-          <p>The text below is preserved unchanged for the record.</p>
-        </aside>
-      )
-    }
+    {status.retracted && data.retracted && (
+      <aside class="retraction" role="note" aria-label="Retraction notice">
+        <p>
+          <strong>
+            Retracted on{' '}
+            <time datetime={isoDate(data.retracted.date)}>{formatDate(data.retracted.date)}</time>.
+          </strong>
+        </p>
+        <p>{data.retracted.reason}</p>
+        <p>The text below is preserved unchanged for the record.</p>
+      </aside>
+    )}
 
-    <div class="prose"><slot /></div>
+    <div class="prose">
+      <slot />
+    </div>
 
-    {
-      status.hasCorrections && data.corrections && (
-        <section class="corrections" aria-labelledby="corrections-heading">
-          <h2 id="corrections-heading">Corrections</h2>
-          <ol>
-            {data.corrections.map((c: Correction) => (
-              <li>
-                <time datetime={isoDate(c.date)}>{formatDate(c.date)}</time> — {c.note}
-              </li>
-            ))}
-          </ol>
-        </section>
-      )
-    }
+    {status.hasCorrections && data.corrections && (
+      <section class="corrections" aria-labelledby="corrections-heading">
+        <h2 id="corrections-heading">Corrections</h2>
+        <ol>
+          {data.corrections.map((c: Correction) => (
+            <li>
+              <time datetime={isoDate(c.date)}>{formatDate(c.date)}</time> — {c.note}
+            </li>
+          ))}
+        </ol>
+      </section>
+    )}
   </article>
 
   <Giscus />

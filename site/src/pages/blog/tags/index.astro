@@ -5,24 +5,26 @@ import { tagsWithCounts } from '@/lib/posts';
 
 const tags = tagsWithCounts(await getListablePosts());
 ---
+
 <BaseLayout
   title="Topics"
   description="Every topic covered on this blog, with the number of published posts under each one, from software architecture and AI systems to day-to-day tooling."
   path="/blog/tags/"
 >
   <h1>Topics</h1>
-  {
-    tags.length === 0 ? (
-      <p>No topics yet — no posts have been published.</p>
-    ) : (
-      <ul class="tag-index">
-        {tags.map(({ tag, count }) => (
-          <li>
-            <a href={`/blog/tags/${tag}/`}>{tag}</a>
-            <span class="post-meta"> — {count} {count === 1 ? 'post' : 'posts'}</span>
-          </li>
-        ))}
-      </ul>
-    )
-  }
+  {tags.length === 0 ? (
+    <p>No topics yet — no posts have been published.</p>
+  ) : (
+    <ul class="tag-index">
+      {tags.map(({ tag, count }) => (
+        <li>
+          <a href={`/blog/tags/${tag}/`}>{tag}</a>
+          <span class="post-meta">
+            {' '}
+            — {count} {count === 1 ? 'post' : 'posts'}
+          </span>
+        </li>
+      ))}
+    </ul>
+  )}
 </BaseLayout>

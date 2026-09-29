@@ -7,15 +7,7 @@ const DIST = fileURLToPath(new URL('../dist', import.meta.url));
 const BASELINE = fileURLToPath(new URL('../.output-baseline.json', import.meta.url));
 const TEXTUAL = /\.(html|xml|txt|json|css|js|mjs|svg|md)$/;
 
-const FORBIDDEN_PATHS = [
-  'policies',
-  'frameworks',
-  'audits',
-  'templates',
-  'intent',
-  'spec',
-  'plan',
-];
+const FORBIDDEN_PATHS = ['policies', 'frameworks', 'audits', 'templates', 'intent', 'spec', 'plan'];
 const FORBIDDEN_EXTENSIONS = ['.env', '.pem', '.key', '.sqlite'];
 
 /** @param {string} dir @returns {string[]} */

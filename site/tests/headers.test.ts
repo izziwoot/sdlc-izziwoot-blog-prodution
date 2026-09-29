@@ -17,7 +17,7 @@ describe('parseHeadersFile', () => {
   });
 
   it('keeps a header value containing colons intact', () => {
-    const parsed = parseHeadersFile('/*\n  CSP: default-src \'self\'; img-src https://x.test\n');
+    const parsed = parseHeadersFile("/*\n  CSP: default-src 'self'; img-src https://x.test\n");
     expect(parsed.get('/*')?.['CSP']).toBe("default-src 'self'; img-src https://x.test");
   });
 });

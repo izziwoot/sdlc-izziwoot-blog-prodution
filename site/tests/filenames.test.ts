@@ -7,7 +7,9 @@ const ok = (file: string) => ({ file, author: 'adilson-cesar' });
 
 describe('checkFilenames', () => {
   it('accepts kebab-case markdown filenames', () => {
-    expect(checkFilenames({ files: [ok('choose-boring-tools.md')], reserved, authors })).toEqual([]);
+    expect(checkFilenames({ files: [ok('choose-boring-tools.md')], reserved, authors })).toEqual(
+      [],
+    );
   });
 
   it('rejects a filename that is not kebab-case', () => {

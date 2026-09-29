@@ -55,24 +55,22 @@ explicit top-level `vite`: Vitest 3.2.7 declares `vite` peer
 copies in the tree is correct and expected here, and the copy Vitest uses is
 already past the `>=6.4.3` fix.
 
-### ⚠️ Tasks 2, 3, 7, 8, 9, 10, 12 need revision for Astro 7's content API
+### ⚠️ Astro 7 content-layer API — RESOLVED, and it changes Tasks 3, 7, 8, 9, 10, 12
 
-The content-collection code in those tasks was written against an older Astro
-API. Confirmed against the installed `astro@7.3.5`:
+Settled during Task 2 by reading the generated `.astro/content.d.ts` and the
+installed `astro@7.3.5`, not by guessing. Task 2 is already corrected; the
+listed tasks still contain code that **cannot run**:
 
-- **`await post.render()` does not exist.** Rendering is a standalone export
-  (`createRenderEntry` internally; `render(entry)` from `astro:content`). Tasks
-  7, 8, and 9 all call `post.render()` and must be rewritten.
-- `astro/loaders` exports `glob` and `file` — the content-layer loader API is
-  what Astro 7 expects for a `blog` collection sourced from Markdown files.
-- `defineCollection` still *types* `type?: 'content'` next to `'content_layer'`.
+| Finding | Consequence |
+| --- | --- |
+| **`slug` does not exist.** `grep slug .astro/content.d.ts` returns nothing; entries are keyed by `id`, and `ReferenceDataEntry` is `{ collection, id }` | Every `post.slug` in Tasks 3, 7, 8, 9, 10, 12 becomes `post.id`. Affects route params, `PostCard`, feed link/guid construction, and the sitemap exclusion list |
+| **`render` is a standalone export**, not a method: `export function render<C extends keyof DataEntryMap>(...)` | `await post.render()` in Tasks 7, 8, 9 becomes `await render(post)` with `import { render } from 'astro:content'`. `RenderResult` still carries `Content`, `headings`, and `remarkPluginFrontmatter`, so reading time is unaffected |
+| **The config file is `src/content.config.ts`** — Astro 6 removed legacy content collections and throws `LegacyContentConfigError` for `src/content/config.ts` | The file-structure table above and Task 2 are corrected. Note the relative import becomes `./content/schema` |
+| **Collections need `loader: glob(...)`** from `astro/loaders`, not `type: 'content'` | The glob loader derives `id` from the filename, which is what keeps GC-13 true |
+| **zod must be `^4`.** Astro 7 depends on `zod ^4.5.4` | Mixing majors breaks typechecking *and* runtime: zod 3 schemas make Astro's JSON-schema generation throw `Cannot read properties of undefined (reading 'def')`. zod 4 idioms: `required_error` → `error`, `z.string().url()` → `z.url()` |
 
-**Settle these at Task 2 against the installed version, do not guess:** whether
-`type: 'content'` still functions at runtime or only survives as a deprecated
-type, and whether entries expose `slug` or only `id` — the plan uses
-`post.slug` throughout, and if Astro 7 dropped it, every route and the feed's
-URL construction change. Read the generated `.astro/types.d.ts` after a
-`pnpm check`; it is authoritative for the installed version.
+**Do not carry `post.slug` or `post.render()` into any new task.** Both are
+Astro 4 idioms that typecheck against nothing in this project.
 
 ### Blocked-by-decision gate
 
@@ -119,7 +117,7 @@ Files created by this plan, and the single responsibility of each.
 | `src/config/env.ts` | **Pure** env parsing and validation; throws on missing `SITE_URL` |
 | `src/config/site.ts` | Site-wide constants, reads validated env |
 | `src/content/schema.ts` | **Pure** Zod schemas + `TAGS` + `RESERVED_SLUGS`. Imports no Astro runtime |
-| `src/content/config.ts` | Thin Astro binding: `defineCollection` over `schema.ts` |
+| `src/content.config.ts` | Thin Astro binding: `defineCollection` with `loader: glob(...)` over `schema.ts`. **Must sit at `src/content.config.ts`** — Astro 6+ rejects `src/content/config.ts` |
 | `src/content/blog/*.md` | Posts. Filename is the slug |
 | `src/content/authors/adilson-cesar.json` | The single author record |
 | `src/lib/posts.ts` | **Pure** post selection, draft/future filtering, deterministic sort, tag grouping |
@@ -184,7 +182,7 @@ echo "22.23.3" > .nvmrc   # 22.x, NOT 20.x: see note below
 mkdir -p site/src/{config,content,lib,components,layouts,pages,styles,assets} site/public site/scripts/lib site/tests
 cd site
 pnpm init
-pnpm add astro@^7 zod@^3
+pnpm add astro@^7 zod@^4
 pnpm add -D typescript vitest@^3 @types/node @astrojs/check
 pnpm pkg set packageManager="pnpm@$(pnpm --version)"
 pnpm pkg set engines.node=">=20.11 <23"
@@ -356,7 +354,7 @@ git commit -m "feat(site): scaffold Astro project with validated build environme
 
 **Files:**
 - Create: `site/src/content/schema.ts`
-- Create: `site/src/content/config.ts`
+- Create: `site/src/content.config.ts` (NOT `src/content/config.ts`)
 - Create: `site/src/content/authors/adilson-cesar.json`
 - Test: `site/tests/schema.test.ts`
 

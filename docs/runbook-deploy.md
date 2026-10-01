@@ -67,8 +67,9 @@ with production in the index is an easy failure to miss.
 ## A leaked credential
 
 1. **Rotate the credential first.** Revocation is the remediation; nothing else is.
-2. Do not revert-and-forget. Git history is permanent, and once the repository is
-   public a revert hides the value without removing it.
+2. Do not revert-and-forget. This repository is public and git history is
+   permanent: a revert hides the value without removing it, and anyone can read
+   the earlier commit.
 3. Record the incident under `audits/`.
 
 ## Correct a published post

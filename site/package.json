@@ -12,7 +12,6 @@
     "build": "astro build",
     "check": "astro check",
     "test": "vitest run",
-    "lint:content": "node scripts/check-filenames.mjs",
     "verify:headers": "node scripts/assert-headers.mjs",
     "verify:output": "node scripts/assert-no-governance-leak.mjs",
     "lint:content": "node scripts/check-filenames.mjs",

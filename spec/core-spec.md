@@ -298,7 +298,7 @@ every path, its generator, its response, and its headers. All routes are `GET`
 | `/about/` | `pages/about.astro` | static | 200 HTML | Bio, contact, **AI-assistance disclosure (§6.4)**, correction policy link. |
 | `/feed.xml` | `pages/feed.xml.ts` | endpoint | 200 `application/rss+xml` | RSS 2.0 via `@astrojs/rss`. §4.4. |
 | `/sitemap-index.xml` | `@astrojs/sitemap` | integration | 200 XML | Excludes drafts and 404. Referenced from `robots.txt`. |
-| `/robots.txt` | `public/robots.txt` | static | 200 text | `Allow: /`, plus `Sitemap:` absolute URL. |
+| `/robots.txt` | `pages/robots.txt.ts` | endpoint | 200 text | `Allow: /` plus an absolute `Sitemap:` built from the validated `SITE_URL`, so there is no placeholder to remember to replace. A preview deploy emits a blanket `Disallow: /` instead (§10.5). |
 | `/404.html` | `pages/404.astro` | static | **404** HTML | Cloudflare Pages serves this automatically for unmatched paths. |
 
 ### 4.2 URL normalization

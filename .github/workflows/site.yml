@@ -67,40 +67,15 @@ jobs:
           args: --config lychee.toml --root-dir ${{ github.workspace }}/site/dist site/dist
           fail: true
 
-      # Not treosh/lighthouse-ci-action: lighthouserc.json resolves
-      # `staticDistDir: "dist"` against the working directory, and the action runs
-      # from the repository root, where there is no dist/. LHCI served an empty
-      # directory, every URL returned 404, and `collect` died before a single
-      # budget was evaluated — the gate reported failure without ever measuring.
-      # Running the repository's own script from site/ makes the path resolve and
-      # means local and CI invoke one identical command, the same reasoning as
-      # Task 17's verify chain. @lhci/cli still stays out of the lockfile via dlx
-      # (Task 18), and ubuntu-latest ships Chrome for it to drive.
+      # Pinned to a full commit SHA, per the plan's global constraints. The
+      # earlier failure here was never the action: lighthouserc.json resolved
+      # `staticDistDir` against the working directory, so from the repository
+      # root there was no dist/ to serve and every URL 404'd before a budget was
+      # evaluated. Fixed in the config, which keeps the pin — replacing the
+      # action with `pnpm dlx @lhci/cli@0.15.1` traded a SHA for a mutable
+      # version tag outside the lockfile, with no integrity hash.
       - name: Lighthouse budgets
-        run: pnpm lint:lighthouse
-        working-directory: site
+        uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # 12.6.2
+        with:
+          configPath: ./site/lighthouserc.json
 
-      # Diagnostic, not a gate. CLS fails here and cannot be reproduced on a
-      # developer machine, where the same build measures 0.0006 — so the report
-      # has to say which element moved rather than leaving it to inference.
-      - name: Name the layout-shift culprits
-        if: failure()
-        working-directory: site
-        run: |
-          node --input-type=module <<'JS'
-          import { readFileSync, readdirSync, existsSync } from 'node:fs';
-          if (!existsSync('.lighthouseci')) { console.log('no reports'); process.exit(0); }
-          for (const f of readdirSync('.lighthouseci').filter((n) => n.startsWith('lhr-') && n.endsWith('.json'))) {
-            const d = JSON.parse(readFileSync(`.lighthouseci/${f}`, 'utf8'));
-            const cls = d.audits['cumulative-layout-shift']?.numericValue ?? 0;
-            if (cls <= 0.02) continue;
-            console.log(`\n=== ${d.finalDisplayedUrl} CLS=${cls} ===`);
-            for (const id of ['layout-shifts', 'layout-shift-elements', 'cls-culprits-insight']) {
-              const a = d.audits[id];
-              if (!a) continue;
-              console.log(`--- ${id} (score=${a.score}) ---`);
-              console.log(JSON.stringify(a.details?.items ?? a.details ?? {}, null, 1).slice(0, 4000));
-            }
-            break;
-          }
-          JS

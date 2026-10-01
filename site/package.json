@@ -20,7 +20,7 @@
     "format:check": "prettier --check .",
     "format": "prettier --write .",
     "verify": "pnpm check && pnpm lint:content && pnpm lint:md && pnpm format:check && pnpm test && pnpm build && pnpm verify:headers && pnpm verify:output && pnpm lint:links",
-    "lint:lighthouse": "pnpm dlx @lhci/cli@0.15.1 autorun --config=./lighthouserc.json",
+    "lint:lighthouse": "cd .. && pnpm dlx @lhci/cli@0.15.1 autorun --config=./site/lighthouserc.json",
     "assets:og": "node scripts/generate-og.mjs",
     "prepare": "git -C .. config core.hooksPath .githooks || true"
   },

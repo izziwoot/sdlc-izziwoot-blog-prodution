@@ -18,21 +18,30 @@ import { site } from '@/config/site';
     Comments are GitHub Discussions and need a GitHub account. No account? The
     <a href="/about/">about page</a> has other ways to reach me.
   </p>
-  <script
-    src="https://giscus.app/client.js"
-    data-repo={site.giscus.repo}
-    data-repo-id={site.giscus.repoId}
-    data-category={site.giscus.category}
-    data-category-id={site.giscus.categoryId}
-    data-mapping="pathname"
-    data-strict="1"
-    data-reactions-enabled="0"
-    data-emit-metadata="0"
-    data-input-position="top"
-    data-theme="preferred_color_scheme"
-    data-lang="en"
-    data-loading="lazy"
-    crossorigin="anonymous"
-    async
-  />
+  <!--
+    The wrapper is what makes FR-35's reservation real. global.css reserves
+    min-height on .giscus-frame, but giscus injects its own container only once
+    client.js has loaded, so until then the rule has no element to apply to and
+    the footer shifts up by the full height of the thread. The div exists in the
+    static HTML, so the space is reserved from first paint.
+  -->
+  <div class="giscus-frame">
+    <script
+      src="https://giscus.app/client.js"
+      data-repo={site.giscus.repo}
+      data-repo-id={site.giscus.repoId}
+      data-category={site.giscus.category}
+      data-category-id={site.giscus.categoryId}
+      data-mapping="pathname"
+      data-strict="1"
+      data-reactions-enabled="0"
+      data-emit-metadata="0"
+      data-input-position="top"
+      data-theme="preferred_color_scheme"
+      data-lang="en"
+      data-loading="lazy"
+      crossorigin="anonymous"
+      async
+    />
+  </div>
 </section>

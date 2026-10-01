@@ -67,7 +67,15 @@ jobs:
           args: --config lychee.toml --root-dir ${{ github.workspace }}/site/dist site/dist
           fail: true
 
+      # Not treosh/lighthouse-ci-action: lighthouserc.json resolves
+      # `staticDistDir: "dist"` against the working directory, and the action runs
+      # from the repository root, where there is no dist/. LHCI served an empty
+      # directory, every URL returned 404, and `collect` died before a single
+      # budget was evaluated — the gate reported failure without ever measuring.
+      # Running the repository's own script from site/ makes the path resolve and
+      # means local and CI invoke one identical command, the same reasoning as
+      # Task 17's verify chain. @lhci/cli still stays out of the lockfile via dlx
+      # (Task 18), and ubuntu-latest ships Chrome for it to drive.
       - name: Lighthouse budgets
-        uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # 12.6.2
-        with:
-          configPath: ./site/lighthouserc.json
+        run: pnpm lint:lighthouse
+        working-directory: site

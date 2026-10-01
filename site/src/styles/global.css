@@ -246,9 +246,13 @@ figcaption {
   padding-block-start: var(--space);
 }
 
-/* Reserve height for the lazily-loaded Giscus iframe: CLS budget is 0.02. */
+/* Reserve height for the lazily-loaded Giscus iframe (FR-35).
+   .comments-reserve is ours and exists in the static HTML, so the reservation
+   applies from first paint; .giscus and .giscus-frame are giscus's own injected
+   container and iframe, kept so the height survives once it replaces them. */
 .comments .giscus,
-.comments .giscus-frame {
+.comments .giscus-frame,
+.comments .comments-reserve {
   min-height: 20rem;
 }
 

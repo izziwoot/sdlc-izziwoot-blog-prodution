@@ -19,13 +19,16 @@ import { site } from '@/config/site';
     <a href="/about/">about page</a> has other ways to reach me.
   </p>
   <!--
-    The wrapper is what makes FR-35's reservation real. global.css reserves
-    min-height on .giscus-frame, but giscus injects its own container only once
-    client.js has loaded, so until then the rule has no element to apply to and
-    the footer shifts up by the full height of the thread. The div exists in the
-    static HTML, so the space is reserved from first paint.
+    FR-35: "reserve its vertical space to avoid shift on load". giscus injects its
+    own container only once client.js has loaded, so a rule written solely against
+    giscus's classes has no element to match beforehand. This wrapper exists in the
+    static HTML, so the reservation applies from first paint.
+
+    The class is deliberately ours: giscus names its own injected iframe
+    `giscus-frame`, and reusing that name made one selector match both our wrapper
+    and their iframe.
   -->
-  <div class="giscus-frame">
+  <div class="comments-reserve">
     <script
       src="https://giscus.app/client.js"
       data-repo={site.giscus.repo}

@@ -3,9 +3,10 @@
 The Izzi Woot blog, and the SDLC governance that controls how it reaches production,
 in one repository.
 
-> **Note on the name:** `prodution` is a typo. Renaming is free until the name is
-> embedded in a Cloudflare Pages config, a custom domain, and deploy logs — see
-> [Open decisions](#open-decisions).
+> **Note on the name:** `prodution` is a typo. Renaming is still free: the Pages
+> project is named `izziwoot-blog` and the custom domain is `myblog.mycirrusit.com`,
+> so the typo reaches neither the deploy URL nor the public site — only the
+> repository URL itself. See [Open decisions](#open-decisions).
 
 ## What is here
 
@@ -30,12 +31,14 @@ trail is read with `git log -- policies/ frameworks/ audits/`.
 | `spec/core-spec.md` | Technical spec: invariants, data models, routes, security protocols, and the contradictions §10 could not resolve | present |
 | `plan/core-plan.md` | 23-task implementation plan with TDD steps and proof-of-completion criteria | present |
 | `plan/core-tickets.md` | The same 23 tasks as groomable tickets with dependencies and acceptance criteria | present |
-| `site/` | The Astro application — the only publishable tree | in progress |
+| `site/` | The Astro application — the only publishable tree | live |
 | `policies/` | Written policies (access control, change management, incident response) | planned |
 | `frameworks/` | Control mappings to external frameworks (SOC 2, ISO 27001, NIST) | planned |
-| `audits/` | Audit evidence, findings, and remediation tracking | planned |
-| `templates/` | Reusable templates for policies, risk assessments, and exceptions | planned |
-| `.github/workflows/` | Path-scoped CI: site build, governance checks, secret scanning | planned |
+| `audits/` | Audit evidence, findings, and remediation tracking | present |
+| `templates/` | Reusable templates for policies, risk assessments, and exceptions | present |
+| `docs/` | Operational runbooks: deploying, and secret scanning | present |
+| `scripts/` | Repository-level checks (governance front matter) | present |
+| `.github/workflows/` | Path-scoped CI: site build, governance checks, secret scanning, weekly link report | present |
 
 **Nothing outside `site/` is ever published.** The Astro root is `site/`, never the
 repository root — at the root, the content globber would match `policies/**/*.md` and
@@ -131,23 +134,34 @@ Each of these was found by running the build, not by reading docs:
 
 | Task | State |
 | --- | --- |
-| 1 — project scaffold, validated environment | done |
-| 2 — content schemas on the Astro 7 content layer | done |
-| 3 — post selection, ordering, tag grouping | done |
-| 4–21 — routes, design, feed, CI gates, deploy | not started |
+| 1–3 — scaffold, content schemas, post selection | done |
+| 4–9 — slug guard, SEO, design system, index, post route, tags | done |
+| 10–14 — feed, static pages, discovery, media, comments | done |
+| 15–20 — headers, leak assertions, lint gates, Lighthouse, secret scanning, CI | done |
+| 21 — deploy to Cloudflare Pages | **live** at `myblog.mycirrusit.com`; analytics beacon and the manual CSP check outstanding |
 | 22 — branch protection | **blocked** on spec §10.1 and §10.2 |
 | 23 — launch verification | not started |
 
-Current verification: 45 tests passing, `astro check` clean, and
-`pnpm audit --audit-level=high` exiting 0. No page has been built yet — everything
-verified so far is pure functions and typechecking. `astro build` first runs at Task 7.
+Current verification: **228 tests passing**, `astro check` clean across 52 files
+(0 errors, 0 warnings, 1 hint), and the whole `pnpm verify` chain green in CI —
+typecheck, content and markdown lints, formatting, tests, build, header assertions,
+governance-leak assertions, internal link and anchor checking, then Lighthouse
+budgets over four URLs.
+
+Headers, canonical URLs, the three redirects and a real 404 are verified **against
+the live origin**, not against build output: a `_headers` file sitting in `dist` is a
+different claim from a header being served. Two things remain unverified and are not
+claimed — the preview `noindex` has only been reproduced locally by setting
+`CF_PAGES_BRANCH`, and no Giscus thread has ever rendered, so comments are configured
+rather than proven.
 
 ## Open decisions
 
 These block specific work and are recorded in `intent/core-intent.md`:
 
-1. **Domain** — required before deploy (Task 21).
-2. **Repository rename** — `prodution` → `production`, free until the first deploy.
+1. ~~**Domain**~~ — **resolved**: `myblog.mycirrusit.com`, live on Cloudflare Pages.
+2. **Repository rename** — `prodution` → `production`. Still free, and no longer on a
+   deadline: the Pages project and custom domain carry no typo.
 3. **Branch protection strategy** — GitHub cannot scope required reviews to file
    paths; spec §10.1 has the options.
 4. **Approval requirement** — and amending the policy text to match, per spec §10.2.

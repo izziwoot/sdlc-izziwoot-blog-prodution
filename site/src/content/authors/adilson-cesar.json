@@ -3,6 +3,6 @@
   "title": "Software engineer",
   "links": [
     { "label": "GitHub", "href": "https://github.com/izziwoot", "icon": "github" },
-    { "label": "RSS", "href": "https://example.com/feed.xml", "icon": "rss" }
+    { "label": "RSS", "href": "https://myblog.mycirrusit.com/feed.xml", "icon": "rss" }
   ]
 }

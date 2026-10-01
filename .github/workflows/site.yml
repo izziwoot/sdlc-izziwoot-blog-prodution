@@ -26,6 +26,12 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          # The action reads `packageManager` from this file. Without it the
+          # action looks at the repository root, where there is no manifest, and
+          # fails with "No pnpm version is specified". The pin stays in
+          # site/package.json so there is one source of truth (GC-2).
+          package_json_file: site/package.json
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc

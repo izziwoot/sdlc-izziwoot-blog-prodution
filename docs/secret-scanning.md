@@ -18,6 +18,31 @@ brew install gitleaks   # or https://github.com/gitleaks/gitleaks/releases
 get it for free. The hook **warns rather than fails** when gitleaks is missing, so
 a fresh clone is never bricked by a missing tool — CI is the blocking gate.
 
+## CI
+
+The blocking gate is the `gitleaks` job in `.github/workflows/security.yml`, which
+is deliberately **not** path-filtered: a secret can land in any file.
+
+It runs the gitleaks **binary**, pinned to the same version the hook uses and
+verified against a published SHA-256 before it executes. It does not use
+`gitleaks/gitleaks-action`, which from v2 refuses to run for a GitHub
+organization without a purchased `GITLEAKS_LICENSE`. `izziwoot` is an
+organization, so that action failed with `missing gitleaks license` on every run
+— the control this document calls the blocking gate was not executing at all.
+Reading the job's own logs is what surfaced that; the workflow file looked
+correct.
+
+Two consequences worth keeping in mind:
+
+- **The version is pinned in two places** — `.github/workflows/security.yml` and
+  whatever the developer has installed locally. They are meant to match, so that
+  local and CI cannot disagree about what counts as a secret. Bumping one is a
+  deliberate change to both.
+- **The subcommand is version-sensitive.** 8.30 removed `detect` and hides
+  `protect`; history scanning is `gitleaks git`. A future major may remove
+  `protect`, which the hook still uses, and the hook fails *closed* — it would
+  block commits rather than skip silently.
+
 ## If something is caught
 
 **Do not commit and then revert.** This repository is public and git history is

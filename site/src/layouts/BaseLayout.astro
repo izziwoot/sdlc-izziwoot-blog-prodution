@@ -22,6 +22,15 @@ const { type = 'website', ...rest } = Astro.props;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!--
+      FR-33 mandates a preload for the body face and there was none, in the
+      layout or in the output. Lighthouse named the cost: div.prose shifts when
+      body-latin.woff2 and mono-latin.woff2 arrive, which is the whole of the
+      post page's 0.0247 CLS against a 0.02 budget. `crossorigin` is required
+      even same-origin, or the font is fetched twice and the preload is wasted.
+      Only the body face, per FR-33; the mono face is measured separately.
+    -->
+    <link rel="preload" href="/fonts/body-latin.woff2" as="font" type="font/woff2" crossorigin />
     <SEO {...rest} type={type} />
     {site.analyticsToken && (
       <script
